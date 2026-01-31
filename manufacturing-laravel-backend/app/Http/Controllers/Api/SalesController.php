@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\SaleResource;
 use App\Models\ProductionLine;
 use App\Models\Sale;
+use App\Http\Requests\GenerateSalesRequest;
+use App\Http\Requests\UpdateSalesPriorityRequest;
 use App\Services\SalesService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,17 +45,13 @@ class SalesController extends Controller
         return response()->json(SaleResource::collection($sales));
     }
 
-    public function generateRandomSales(Request $request): JsonResponse
+    public function generateRandomSales(GenerateSalesRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'production_line_id' => 'required|exists:production_lines,id',
-            'count' => 'integer|min:1|max:20',
-        ]);
-
         try {
+            // No need to validate manually, Request handles it
             $sales = $this->salesService->generateRandomSales(
-                $validated['production_line_id'],
-                $validated['count'] ?? rand(3, 8)
+                $request->production_line_id,
+                $request->count ?? rand(3, 8)
             );
             return response()->json(SaleResource::collection(collect($sales)), 201);
         } catch (\Exception $e) {
@@ -67,13 +65,13 @@ class SalesController extends Controller
         return response()->json(['message' => 'Sales cleared successfully']);
     }
 
-    public function updatePriority(Request $request): JsonResponse
+    public function updatePriority(UpdateSalesPriorityRequest $request): JsonResponse
     {
-        $request->validate([
-            'sale_ids' => 'required|array',
-            'sale_ids.*' => 'uuid|exists:sales,id',
-        ]);
-
-        return response()->json(['message' => 'Priority updated']);
+        try {
+            $this->salesService->updatePriorities($request->sale_ids);
+            return response()->json(['message' => 'Priority updated successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
     }
 }

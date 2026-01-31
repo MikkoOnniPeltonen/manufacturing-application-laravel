@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateProductionItemsRequest;
 use App\Http\Resources\SaleResource;
 use App\Models\ProductionLine;
 use App\Models\Sale;
@@ -29,19 +30,13 @@ class ProductionController extends Controller
         return response()->json(SaleResource::collection($items));
     }
 
-    public function updateItems(Request $request, ProductionLine $productionLine): JsonResponse
+    public function updateItems(UpdateProductionItemsRequest $request, ProductionLine $productionLine): JsonResponse
     {
-        $validated = $request->validate([
-            'sale_ids' => 'required|array',
-            'sale_ids.*' => 'uuid',
-            'status' => 'required|in:pending,in_production,completed',
-        ]);
-
         try {
             $this->productionService->updateItemsStatus(
-                $validated['sale_ids'],
+                $request->sale_ids,
                 $productionLine->id,
-                $validated['status']
+                $request->status
             );
             return response()->json(['message' => 'Items updated']);
         } catch (\Exception $e) {

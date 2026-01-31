@@ -70,4 +70,16 @@ class SalesService
                 ->delete();
         });
     }
+    /**
+     * Update priorities for a list of sales.
+     */
+    public function updatePriorities(array $saleIds): void
+    {
+        DB::transaction(function () use ($saleIds) {
+            foreach ($saleIds as $index => $id) {
+                // Lower index = Higher priority (1, 2, 3...)
+                Sale::where('id', $id)->update(['priority' => $index + 1]);
+            }
+        });
+    }
 }

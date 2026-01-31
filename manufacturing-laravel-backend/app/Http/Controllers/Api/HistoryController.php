@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetHistoryRequest;
 use App\Models\ProductionLine;
 use App\Services\HistoryService;
 use Illuminate\Http\JsonResponse;
@@ -17,19 +18,8 @@ class HistoryController extends Controller
         $this->historyService = $historyService;
     }
 
-    public function show(Request $request, ProductionLine $productionLine): JsonResponse
+    public function show(GetHistoryRequest $request, ProductionLine $productionLine): JsonResponse
     {
-        $validated = $request->validate([
-            'timestamp' => 'nullable|date',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
-            'product_name' => 'nullable|string',
-            'customer_name' => 'nullable|string',
-            'status' => 'nullable|string',
-            'min_quantity' => 'nullable|integer|min:0',
-            'max_quantity' => 'nullable|integer|min:0|gte:min_quantity',
-        ]);
-
         try {
             // Check if we are in Range/Search mode (either dates or filters provided)
             if ($request->hasAny(['start_date', 'end_date', 'product_name', 'customer_name', 'status', 'min_quantity', 'max_quantity', 'search_mode'])) {
@@ -49,7 +39,7 @@ class HistoryController extends Controller
                 );
             } else {
                 // Default to timestamp snapshot if no range provided
-                $timestamp = $validated['timestamp'] ?? now();
+                $timestamp = $request->timestamp ?? now();
                 $state = $this->historyService->getProductionLineState(
                     $productionLine->id,
                     $timestamp
