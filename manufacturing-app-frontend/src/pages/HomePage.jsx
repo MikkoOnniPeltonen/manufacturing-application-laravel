@@ -8,15 +8,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight } from 'lucide-react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '../api/client';
+import { collectionItems } from '../api/collections';
 import { useAuth } from '../contexts/AuthContext';
-import api from '../lib/api';
-
 
 function HomePage() {
   const { user, isAdmin } = useAuth();
@@ -27,8 +27,9 @@ function HomePage() {
   const { data: productionLines = [], isLoading: prodLinesLoading } = useQuery({
     queryKey: ['production-lines'],
     queryFn: async () => {
-      const { data } = await api.get('/production-lines');
-      return data;
+      const { data, error } = await apiClient.GET('/v1/production-lines');
+      if (error || !data) throw error ?? new Error('Unable to load production lines.');
+      return collectionItems(data);
     },
   });
 
@@ -36,10 +37,11 @@ function HomePage() {
   const { data: sales = [] } = useQuery({
     queryKey: ['sales', selectedLineId],
     queryFn: async () => {
-      const { data } = await api.get('/sales', {
-        params: { production_line_id: selectedLineId },
+      const { data, error } = await apiClient.GET('/v1/sales/{productionLine}', {
+        params: { path: { productionLine: selectedLineId } },
       });
-      return data;
+      if (error || !data) throw error ?? new Error('Unable to load sales.');
+      return collectionItems(data);
     },
     enabled: !!selectedLineId,
   });
@@ -53,10 +55,10 @@ function HomePage() {
   // 3. Mutation: Generate Sales
   const generateSalesMutation = useMutation({
     mutationFn: async ({ lineId, count }) => {
-      return api.post(`/sales/generate`, {
-        production_line_id: lineId,
-        count,
+      const { error } = await apiClient.POST('/v1/sales/generate', {
+        body: { production_line_id: lineId, count },
       });
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success('Random sales generated successfully!');
@@ -68,21 +70,6 @@ function HomePage() {
     },
   });
 
-  // 4. Mutation: Clear Sales
-  const clearSalesMutation = useMutation({
-    mutationFn: async lineId => {
-      return api.delete(`/sales/${lineId}/clear`);
-    },
-    onSuccess: () => {
-      toast.success('Pending sales cleared!');
-      queryClient.invalidateQueries(['production-lines']);
-      queryClient.invalidateQueries(['sales', selectedLineId]);
-    },
-    onError: () => {
-      toast.error('Failed to clear sales');
-    },
-  });
-
   const handleGenerateSales = () => {
     if (!selectedLineId) {
       toast.error('Please select a production line first');
@@ -90,16 +77,6 @@ function HomePage() {
     }
     const count = Math.floor(Math.random() * 5) + 3;
     generateSalesMutation.mutate({ lineId: selectedLineId, count });
-  };
-
-  const handleClearSales = () => {
-    if (!selectedLineId) {
-      toast.error('Please select a production line first');
-      return;
-    }
-    if (!window.confirm('Are you sure you want to clear all pending sales for this line?')) return;
-
-    clearSalesMutation.mutate(selectedLineId);
   };
 
   const salesLoading = generateSalesMutation.isPending; // Alias for UI compatibility
@@ -129,9 +106,7 @@ function HomePage() {
             <p className="text-slate-400 text-lg">
               Welcome back, <span className="text-blue-400 font-semibold">{user?.name}</span>.
             </p>
-            <p className="text-slate-500">
-              Overview of production status and sales distribution.
-            </p>
+            <p className="text-slate-500">Overview of production status and sales distribution.</p>
           </div>
 
           {/* Admin Quick Access */}
@@ -158,9 +133,9 @@ function HomePage() {
             <CardContent className="p-6 space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">
+                  <div className="text-sm font-medium text-slate-300">
                     Select Production Line target
-                  </label>
+                  </div>
                   <Select onValueChange={setSelectedLineId} value={selectedLineId || ''}>
                     <SelectTrigger className="w-full bg-slate-900 border-slate-700 text-white h-11">
                       <SelectValue placeholder="Choose a line..." />
@@ -235,8 +210,8 @@ function HomePage() {
                         outerRadius={80}
                         dataKey="value"
                       >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        {pieData.map(entry => (
+                          <Cell key={entry.name} fill={entry.color} />
                         ))}
                       </Pie>
                       <Tooltip
@@ -337,8 +312,6 @@ function HomePage() {
             ))}
           </div>
         </section>
-
-
       </div>
     </div>
   );

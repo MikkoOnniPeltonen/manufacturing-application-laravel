@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\IndexCollectionRequest;
 use App\Http\Resources\ProductionLineResource;
 use App\Models\ProductionLine;
 use Illuminate\Http\JsonResponse;
@@ -10,10 +11,11 @@ use Illuminate\Http\Request;
 
 class ProductionLineController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(IndexCollectionRequest $request): JsonResponse
     {
-        $productionLines = ProductionLine::with('products')->get();
-        return response()->json(ProductionLineResource::collection($productionLines));
+        $productionLines = ProductionLine::with('products');
+
+        return $this->paginatedResourceResponse($request, $productionLines, ProductionLineResource::class, 25, 100);
     }
 
     public function store(Request $request): JsonResponse
@@ -26,6 +28,7 @@ class ProductionLineController extends Controller
         ]);
 
         $productionLine = ProductionLine::create($validated);
+
         return response()->json(new ProductionLineResource($productionLine), 201);
     }
 
@@ -44,12 +47,14 @@ class ProductionLineController extends Controller
         ]);
 
         $productionLine->update($validated);
+
         return response()->json(new ProductionLineResource($productionLine));
     }
 
     public function destroy(ProductionLine $productionLine): JsonResponse
     {
         $productionLine->delete();
+
         return response()->json(null, 204);
     }
 }

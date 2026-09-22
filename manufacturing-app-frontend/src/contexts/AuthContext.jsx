@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import api from '../lib/api';
+import { apiClient } from '../api/client';
+import { initializeCsrf } from '../api/csrf';
 
 const AuthContext = createContext(null);
 
@@ -8,38 +9,32 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing auth on mount
-    const token = sessionStorage.getItem('authToken');
-    const storedUser = sessionStorage.getItem('user');
-
-    if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
-      // Verify token is still valid
-      verifyToken();
-    } else {
-      setLoading(false);
-    }
+    verifyToken();
   }, []);
 
   const verifyToken = async () => {
     try {
-      const response = await api.get('/me');
-      setUser(response.data);
-      sessionStorage.setItem('user', JSON.stringify(response.data));
+      const { data } = await apiClient.GET('/v1/me');
+      setUser(data);
     } catch (_error) {
-      // Token invalid, clear auth
-      logout();
+      setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (email, password) => {
-    const response = await api.post('/login', { email, password });
-    const { user: userData, token } = response.data;
+    await initializeCsrf();
+    const { data, error } = await apiClient.POST('/v1/login', {
+      body: { email, password },
+    });
 
-    sessionStorage.setItem('authToken', token);
-    sessionStorage.setItem('user', JSON.stringify(userData));
+    if (error || !data) {
+      throw error ?? new Error('Login failed');
+    }
+
+    const { user: userData } = data;
+
     setUser(userData);
 
     return userData;
@@ -47,12 +42,10 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await api.post('/logout');
+      await apiClient.POST('/v1/logout');
     } catch (_error) {
-      // Ignore logout errors
+      // Clear local state even if the server is unavailable.
     }
-    sessionStorage.removeItem('authToken');
-    sessionStorage.removeItem('user');
     setUser(null);
   };
 

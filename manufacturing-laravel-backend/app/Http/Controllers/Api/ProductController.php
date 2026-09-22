@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\IndexCollectionRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
@@ -10,10 +11,11 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(IndexCollectionRequest $request): JsonResponse
     {
-        $products = Product::with('productionLine')->get();
-        return response()->json(ProductResource::collection($products));
+        $products = Product::with('productionLine');
+
+        return $this->paginatedResourceResponse($request, $products, ProductResource::class, 25, 100);
     }
 
     public function store(Request $request): JsonResponse
@@ -25,6 +27,7 @@ class ProductController extends Controller
         ]);
 
         $product = Product::create($validated);
+
         return response()->json(new ProductResource($product->load('productionLine')), 201);
     }
 
@@ -42,12 +45,14 @@ class ProductController extends Controller
         ]);
 
         $product->update($validated);
+
         return response()->json(new ProductResource($product->load('productionLine')));
     }
 
     public function destroy(Product $product): JsonResponse
     {
         $product->delete();
+
         return response()->json(null, 204);
     }
 }

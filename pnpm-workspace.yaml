@@ -1,0 +1,7 @@
+packages:
+  - manufacturing-app-frontend
+  - manufacturing-laravel-backend
+
+allowBuilds:
+  '@biomejs/biome': true
+  esbuild: true

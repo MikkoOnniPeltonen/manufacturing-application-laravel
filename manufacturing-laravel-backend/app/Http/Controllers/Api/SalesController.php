@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\SaleStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GenerateSalesRequest;
+use App\Http\Requests\IndexCollectionRequest;
+use App\Http\Requests\UpdateSalesPriorityRequest;
 use App\Http\Resources\SaleResource;
 use App\Models\ProductionLine;
 use App\Models\Sale;
-use App\Http\Requests\GenerateSalesRequest;
-use App\Http\Requests\UpdateSalesPriorityRequest;
 use App\Services\SalesService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class SalesController extends Controller
 {
@@ -21,7 +22,7 @@ class SalesController extends Controller
         $this->salesService = $salesService;
     }
 
-    public function index(Request $request): JsonResponse
+    public function index(IndexCollectionRequest $request): JsonResponse
     {
         $query = Sale::with(['product', 'customer', 'productionLine']);
 
@@ -30,48 +31,41 @@ class SalesController extends Controller
         }
 
         if ($request->has('status')) {
-            $query->where('status', $request->status);
+            $query->where('status', SaleStatus::from((string) $request->input('status')));
         }
 
-        return response()->json(SaleResource::collection($query->get()));
+        return $this->paginatedResourceResponse($request, $query, SaleResource::class, 25, 100);
     }
 
-    public function byProductionLine(ProductionLine $productionLine): JsonResponse
+    public function byProductionLine(IndexCollectionRequest $request, ProductionLine $productionLine): JsonResponse
     {
         $sales = Sale::where('production_line_id', $productionLine->id)
-            ->with(['product', 'customer'])
-            ->get();
+            ->with(['product', 'customer']);
 
-        return response()->json(SaleResource::collection($sales));
+        return $this->paginatedResourceResponse($request, $sales, SaleResource::class, 25, 100);
     }
 
     public function generateRandomSales(GenerateSalesRequest $request): JsonResponse
     {
-        try {
-            // No need to validate manually, Request handles it
-            $sales = $this->salesService->generateRandomSales(
-                $request->production_line_id,
-                $request->count ?? rand(3, 8)
-            );
-            return response()->json(SaleResource::collection(collect($sales)), 201);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
+        $sales = $this->salesService->generateRandomSales(
+            $request->production_line_id,
+            $request->count ?? rand(3, 8)
+        );
+
+        return response()->json(SaleResource::collection(collect($sales)), 201);
     }
 
     public function clearSales(ProductionLine $productionLine): JsonResponse
     {
         $this->salesService->clearPendingSales($productionLine->id);
+
         return response()->json(['message' => 'Sales cleared successfully']);
     }
 
     public function updatePriority(UpdateSalesPriorityRequest $request): JsonResponse
     {
-        try {
-            $this->salesService->updatePriorities($request->sale_ids);
-            return response()->json(['message' => 'Priority updated successfully']);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
-        }
+        $this->salesService->updatePriorities($request->sale_ids);
+
+        return response()->json(['message' => 'Priority updated successfully']);
     }
 }

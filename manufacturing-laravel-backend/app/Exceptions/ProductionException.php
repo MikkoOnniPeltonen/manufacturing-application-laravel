@@ -14,7 +14,8 @@ class ProductionException extends Exception
     {
         return response()->json([
             'message' => $this->getMessage(),
-            'error' => 'Domain Error',
-        ], 400);
+            'code' => 'production_invalid_state',
+            'request_id' => $request->header('X-Request-Id'),
+        ], 409);
     }
 }

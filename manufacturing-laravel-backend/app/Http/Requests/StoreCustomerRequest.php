@@ -18,6 +18,8 @@ class StoreCustomerRequest extends FormRequest
             'contact' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:500',
             'customer_logo_url' => 'nullable|string',
+            'selected_product_ids' => ['sometimes', 'array'],
+            'selected_product_ids.*' => ['integer', 'exists:products,id'],
         ];
     }
 }

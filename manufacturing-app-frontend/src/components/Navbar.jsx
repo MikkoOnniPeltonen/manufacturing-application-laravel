@@ -11,8 +11,13 @@ import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { apiClient } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
-import api from '../lib/api';
+
+const extractCustomerId = path => {
+  const match = path.match(/\/customers\/(\d+)/);
+  return match ? match[1] : null;
+};
 
 function Navbar() {
   const [customerName, setCustomerName] = useState('');
@@ -20,18 +25,14 @@ function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const extractCustomerId = path => {
-    const match = path.match(/\/customers\/(\d+)/);
-    return match ? match[1] : null;
-  };
-
   useEffect(() => {
     const customerId = extractCustomerId(location.pathname);
     if (customerId && isAuthenticated) {
-      api
-        .get(`/customers/${customerId}`)
-        .then(response => {
-          setCustomerName(response.data.name);
+      apiClient
+        .GET('/v1/customers/{customer}', { params: { path: { customer: Number(customerId) } } })
+        .then(({ data, error }) => {
+          if (error || !data) throw error ?? new Error('Unable to load customer.');
+          setCustomerName(data.name);
         })
         .catch(err => {
           console.error('Error fetching customer: ', err);

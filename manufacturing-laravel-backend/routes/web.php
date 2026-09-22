@@ -1,6 +1,6 @@
 <?php
 
+use App\Http\Controllers\ReadinessController;
 use Illuminate\Support\Facades\Route;
 
-// No web routes - API only
-
+Route::get('/ready', ReadinessController::class)->name('readiness');

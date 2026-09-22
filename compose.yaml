@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: manufacturing
+      POSTGRES_USER: manufacturing
+      POSTGRES_PASSWORD: manufacturing
+    ports:
+      - "5432:5432"
+    volumes:
+      - manufacturing-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U manufacturing -d manufacturing"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: valkey/valkey:8-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - manufacturing-redis:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  manufacturing-postgres:
+  manufacturing-redis:

@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: manufacturing
+          POSTGRES_USER: manufacturing
+          POSTGRES_PASSWORD: manufacturing
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U manufacturing -d manufacturing"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: valkey/valkey:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: manufacturing
+      DB_USERNAME: manufacturing
+      DB_PASSWORD: manufacturing
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      REDIS_CLIENT: phpredis
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, xml, ctype, fileinfo, intl, pdo_pgsql, redis
+          coverage: none
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        working-directory: manufacturing-laravel-backend
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Audit Composer dependencies
+        working-directory: manufacturing-laravel-backend
+        run: composer audit --no-interaction
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.5.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare application
+        working-directory: manufacturing-laravel-backend
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+          php artisan migrate --force
+
+      - name: Run Composer tests
+        working-directory: manufacturing-laravel-backend
+        run: composer test
+
+      - name: Run PHP static analysis
+        working-directory: manufacturing-laravel-backend
+        run: composer analyse
+
+      - name: Check PHP formatting
+        working-directory: manufacturing-laravel-backend
+        run: composer format:check
+
+      - name: Check generated OpenAPI files
+        run: |
+          pnpm run api:generate
+          git diff --exit-code -- docs/api/openapi.json manufacturing-app-frontend/src/api/generated.ts
+
+      - name: Lint frontend
+        run: pnpm run lint:frontend
+
+      - name: Build frontend
+        run: pnpm run build:frontend

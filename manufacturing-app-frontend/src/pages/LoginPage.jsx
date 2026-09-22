@@ -4,9 +4,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { apiClient } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
-import api from '../lib/api';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -15,8 +15,6 @@ function LoginPage() {
 
   const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-
   const from = '/';
 
   const handleSubmit = async e => {
@@ -46,7 +44,10 @@ function LoginPage() {
 
     try {
       setIsLoading(true);
-      await api.post('/reset-demo');
+      const { error } = await apiClient.POST('/v1/reset-demo');
+      if (error) {
+        throw error;
+      }
       toast.success('Demo data has been reset.');
     } catch (_error) {
       toast.error('Failed to reset demo data.');

@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\ProductionLine;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ProductionLine>
+ * @extends Factory<ProductionLine>
  */
 class ProductionLineFactory extends Factory
 {
@@ -17,8 +18,7 @@ class ProductionLineFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->unique()->word . ' Line',
-            'status' => 'active',
+            'name' => fake()->unique()->word.' Line',
             'capacity' => fake()->numberBetween(100, 1000),
         ];
     }

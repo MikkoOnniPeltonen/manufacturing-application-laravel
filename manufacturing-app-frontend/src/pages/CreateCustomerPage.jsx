@@ -1,12 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '../api/client';
+import { collectionItems } from '../api/collections';
 import CustomAlertDialog from '../components/CustomAlertDialog';
 import CustomerForm from '../components/CustomerForm';
-import api from '../lib/api';
 
 function CreateCustomerPage() {
   const navigate = useNavigate();
@@ -15,31 +16,38 @@ function CreateCustomerPage() {
   const { data: existingCustomers = [] } = useQuery({
     queryKey: ['customers'],
     queryFn: async () => {
-      const response = await api.get('/customers');
-      return response.data;
+      const { data, error } = await apiClient.GET('/v1/customers');
+      if (error || !data) throw error ?? new Error('Unable to load customers.');
+      return collectionItems(data);
     },
   });
 
   const createCustomerMutation = useMutation({
-    mutationFn: async (newCustomer) => {
-      return api.post('/customers', newCustomer);
+    mutationFn: async newCustomer => {
+      const { data, error } = await apiClient.POST('/v1/customers', {
+        body: {
+          ...newCustomer,
+        },
+      });
+      if (error || !data) throw error ?? new Error('Unable to create customer.');
+      return data;
     },
     onSuccess: () => {
       toast.success('New Customer added successfully!');
       queryClient.invalidateQueries(['customers']);
       setTimeout(() => navigate('/customers'), 1500);
     },
-    onError: (error) => {
+    onError: error => {
       console.error(error);
       setErrorDialogOpen(true);
-    }
+    },
   });
 
   const handleCreateCustomer = async newCustomer => {
     // Check for duplicate name (Client-side optimization)
     // Note: Backend should also validate unique names
     const isDuplicate = existingCustomers.some(
-      c => c.name.toLowerCase() === newCustomer.name.trim().toLowerCase()
+      c => c.name.toLowerCase() === newCustomer.name.trim().toLowerCase(),
     );
 
     if (isDuplicate) {

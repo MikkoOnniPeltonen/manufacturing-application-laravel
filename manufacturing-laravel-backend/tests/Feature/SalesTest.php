@@ -8,8 +8,8 @@ use App\Models\ProductionLine;
 use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class SalesTest extends TestCase
@@ -17,9 +17,13 @@ class SalesTest extends TestCase
     use RefreshDatabase;
 
     protected $admin;
+
     protected $manager;
+
     protected $productionLine;
+
     protected $product;
+
     protected $customer;
 
     protected function setUp(): void
@@ -42,9 +46,9 @@ class SalesTest extends TestCase
         $this->manager = User::factory()->create();
         $this->manager->assignRole('manager');
 
-        $this->productionLine = ProductionLine::create(['name' => 'Test Line', 'status' => 'active', 'capacity' => 100]);
+        $this->productionLine = ProductionLine::create(['name' => 'Test Line', 'capacity' => 100]);
         $this->product = Product::create(['name' => 'Test Product', 'production_line_id' => $this->productionLine->id]);
-        $this->customer = Customer::create(['name' => 'Test Customer', 'email' => 'test@example.com']);
+        $this->customer = Customer::create(['name' => 'Test Customer', 'contact' => 'test@example.com']);
 
         // Link customer to product
         $this->customer->selectedProducts()->attach($this->product->id);
@@ -55,7 +59,7 @@ class SalesTest extends TestCase
         $response = $this->actingAs($this->admin, 'sanctum')
             ->postJson('/api/v1/sales/generate', [
                 'production_line_id' => $this->productionLine->id,
-                'count' => 5
+                'count' => 5,
             ]);
 
         $response->assertStatus(201)
@@ -69,7 +73,7 @@ class SalesTest extends TestCase
         $response = $this->actingAs($this->manager, 'sanctum')
             ->postJson('/api/v1/sales/generate', [
                 'production_line_id' => $this->productionLine->id,
-                'count' => 5
+                'count' => 5,
             ]);
 
         $response->assertStatus(403); // Forbidden
@@ -82,7 +86,7 @@ class SalesTest extends TestCase
             'production_line_id' => $this->productionLine->id,
             'product_id' => $this->product->id,
             'customer_id' => $this->customer->id,
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
 
         // Reorder them: 3, 1, 2
@@ -90,7 +94,7 @@ class SalesTest extends TestCase
 
         $response = $this->actingAs($this->manager, 'sanctum')
             ->patchJson('/api/v1/sales/reorder', [
-                'sale_ids' => $orderedIds
+                'sale_ids' => $orderedIds,
             ]);
 
         $response->assertStatus(200);

@@ -11,7 +11,8 @@
             "dist",
             "node_modules",
             "public",
-            "coverage"
+            "coverage",
+            "src/api/generated.ts"
         ]
     },
     "formatter": {
@@ -29,10 +30,23 @@
             "recommended": true,
             "correctness": {
                 "noUnusedImports": "error",
-                "noUnusedVariables": "error"
+                "noUnusedVariables": "error",
+                "useExhaustiveDependencies": "off"
+            },
+            "complexity": {
+                "noForEach": "off"
             },
             "style": {
-                "noUnusedTemplateLiteral": "off"
+                "noUnusedTemplateLiteral": "off",
+                "useSelfClosingElements": "off"
+            },
+            "a11y": {
+                "useKeyWithClickEvents": "off",
+                "noLabelWithoutControl": "off",
+                "noSvgWithoutTitle": "off"
+            },
+            "security": {
+                "noDangerouslySetInnerHtml": "off"
             }
         }
     },

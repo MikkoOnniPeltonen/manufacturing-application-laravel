@@ -2,7 +2,9 @@
 
 namespace App\Observers;
 
+use App\Enums\SaleStatus;
 use App\Models\Sale;
+use Illuminate\Support\Facades\DB;
 
 class SaleObserver
 {
@@ -51,16 +53,17 @@ class SaleObserver
      */
     private function updateProductionLineHasSales($productionLineId): void
     {
-        if (!$productionLineId)
+        if (! $productionLineId) {
             return;
+        }
 
         $hasPendingSales = Sale::where('production_line_id', $productionLineId)
-            ->whereIn('status', ['pending', 'in_production'])
+            ->whereIn('status', [SaleStatus::Pending, SaleStatus::InProduction])
             ->exists();
 
         // We use DB::table to avoid triggering model events recursively if we set up observers on ProductionLine
         // Also simpler here.
-        \Illuminate\Support\Facades\DB::table('production_lines')
+        DB::table('production_lines')
             ->where('id', $productionLineId)
             ->update(['has_sales' => $hasPendingSales]);
     }

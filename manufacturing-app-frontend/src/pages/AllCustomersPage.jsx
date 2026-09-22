@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useQuery } from '@tanstack/react-query';
 import {
   flexRender,
   getCoreRowModel,
@@ -20,8 +21,8 @@ import {
 import { ArrowLeft, ArrowUpDown, Search, UserPlus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import api from '../lib/api';
+import { apiClient } from '../api/client';
+import { collectionItems } from '../api/collections';
 
 function AllCustomersPage() {
   const location = useLocation();
@@ -31,8 +32,11 @@ function AllCustomersPage() {
   const { data: customers = [], isLoading: loading } = useQuery({
     queryKey: ['customers'],
     queryFn: async () => {
-      const response = await api.get('/customers');
-      return response.data;
+      const { data, error } = await apiClient.GET('/v1/customers');
+      if (error || !data) {
+        throw error ?? new Error('Unable to load customers.');
+      }
+      return collectionItems(data);
     },
   });
 
@@ -47,7 +51,7 @@ function AllCustomersPage() {
       },
       {
         accessorKey: 'name',
-        header: ({ column }) => (
+        header: () => (
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
@@ -75,18 +79,14 @@ function AllCustomersPage() {
       },
       {
         accessorKey: 'contact',
-        header: ({ column }) => (
-          <div className="text-center font-semibold text-slate-300">Contact Info</div>
-        ),
+        header: () => <div className="text-center font-semibold text-slate-300">Contact Info</div>,
         cell: info => (
           <div className="text-slate-400 font-medium text-center">{info.getValue()}</div>
         ),
       },
       {
         accessorKey: 'address',
-        header: ({ column }) => (
-          <div className="text-center font-semibold text-slate-300">Address</div>
-        ),
+        header: () => <div className="text-center font-semibold text-slate-300">Address</div>,
         cell: info => (
           <div
             className="text-slate-400 truncate max-w-[350px] mx-auto text-center"
@@ -157,7 +157,10 @@ function AllCustomersPage() {
     <div className="min-h-screen bg-slate-900 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col">
-          <Link to="/" className="flex items-center text-slate-400 hover:text-white transition-colors mb-4 w-fit">
+          <Link
+            to="/"
+            className="flex items-center text-slate-400 hover:text-white transition-colors mb-4 w-fit"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Link>

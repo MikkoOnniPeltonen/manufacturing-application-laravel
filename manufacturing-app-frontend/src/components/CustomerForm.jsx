@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import Select from 'react-select';
-import api from '../lib/api';
+import { apiClient } from '../api/client';
+import { collectionItems } from '../api/collections';
 
 function CustomerForm({ onSubmit, customerData = {}, buttonText, existingCustomers = [] }) {
   const [formData, setFormData] = useState({
@@ -18,15 +19,17 @@ function CustomerForm({ onSubmit, customerData = {}, buttonText, existingCustome
   );
 
   useEffect(() => {
-    api
-      .get('/products')
-      .then(response => setProductList(response.data))
-      .catch(err => {
-        // Error handling
-      });
+    let cancelled = false;
+    apiClient.GET('/v1/products').then(({ data, error }) => {
+      if (cancelled || error) return;
+      setProductList(collectionItems(data));
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
 
@@ -38,7 +41,7 @@ function CustomerForm({ onSubmit, customerData = {}, buttonText, existingCustome
     // Real-time duplicate name validation
     if (name === 'name' && value.trim()) {
       const isDuplicate = existingCustomers.some(
-        c => c.name.toLowerCase() === value.trim().toLowerCase() && c.id !== customerData.id // Verify it's not the same customer (for edit mode)
+        c => c.name.toLowerCase() === value.trim().toLowerCase() && c.id !== customerData.id, // Verify it's not the same customer (for edit mode)
       );
 
       if (isDuplicate) {
@@ -49,7 +52,7 @@ function CustomerForm({ onSubmit, customerData = {}, buttonText, existingCustome
     }
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = e => {
     e.preventDefault();
 
     const newErrors = {};
@@ -70,7 +73,7 @@ function CustomerForm({ onSubmit, customerData = {}, buttonText, existingCustome
     });
   };
 
-  const productOptions = productList.map((product) => ({
+  const productOptions = productList.map(product => ({
     value: product.id,
     label: product.name,
   }));
@@ -87,7 +90,7 @@ function CustomerForm({ onSubmit, customerData = {}, buttonText, existingCustome
       color: 'white',
       minHeight: '42px',
     }),
-    menu: (provided) => ({
+    menu: provided => ({
       ...provided,
       backgroundColor: 'rgb(51 65 85)',
       border: '1px solid rgb(71 85 105)',
@@ -100,15 +103,15 @@ function CustomerForm({ onSubmit, customerData = {}, buttonText, existingCustome
         backgroundColor: 'rgb(37 99 235)',
       },
     }),
-    multiValue: (provided) => ({
+    multiValue: provided => ({
       ...provided,
       backgroundColor: 'rgb(30 58 138)',
     }),
-    multiValueLabel: (provided) => ({
+    multiValueLabel: provided => ({
       ...provided,
       color: 'rgb(191 219 254)',
     }),
-    multiValueRemove: (provided) => ({
+    multiValueRemove: provided => ({
       ...provided,
       color: 'rgb(147 197 253)',
       '&:hover': {
@@ -116,15 +119,15 @@ function CustomerForm({ onSubmit, customerData = {}, buttonText, existingCustome
         color: 'white',
       },
     }),
-    input: (provided) => ({
+    input: provided => ({
       ...provided,
       color: 'white',
     }),
-    placeholder: (provided) => ({
+    placeholder: provided => ({
       ...provided,
       color: 'rgb(148 163 184)',
     }),
-    singleValue: (provided) => ({
+    singleValue: provided => ({
       ...provided,
       color: 'white',
     }),

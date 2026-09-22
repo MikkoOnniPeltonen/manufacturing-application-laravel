@@ -23,7 +23,7 @@ class SaleResource extends JsonResource
             'production_line_id' => $this->production_line_id,
             'production_line' => new ProductionLineResource($this->whenLoaded('productionLine')),
             'quantity' => $this->quantity,
-            'status' => $this->status,
+            'status' => $this->status?->value,
             'date_to_deliver' => $this->date_to_deliver->toIso8601String(),
             'delivered_at' => $this->delivered_at ? $this->delivered_at->toIso8601String() : null,
             'created_at' => $this->created_at->toIso8601String(),

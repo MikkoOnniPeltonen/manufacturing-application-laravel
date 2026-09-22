@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\SaleStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,7 +24,7 @@ class CustomerResource extends JsonResource
             'selected_products' => ProductResource::collection($this->whenLoaded('selectedProducts')),
             'sales' => $this->whenLoaded('sales'),
             'delivered' => $this->whenLoaded('sales', function () {
-                return $this->sales->where('status', 'delivered')->map(function ($sale) {
+                return $this->sales->where('status', SaleStatus::Delivered)->map(function ($sale) {
                     return [
                         'id' => $sale->id,
                         'productionLineId' => $sale->production_line_id,

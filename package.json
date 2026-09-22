@@ -1,0 +1,13 @@
+{
+  "name": "manufacturing-management-system",
+  "private": true,
+  "packageManager": "pnpm@12.5.1",
+  "scripts": {
+    "dev:frontend": "pnpm --filter manufacturing-frontend dev",
+    "build:frontend": "pnpm --filter manufacturing-frontend build",
+    "lint:frontend": "pnpm --filter manufacturing-frontend lint",
+    "api:export": "pnpm --dir manufacturing-laravel-backend exec -- php artisan scramble:export --path=../docs/api/openapi.json --silent",
+    "api:types": "pnpm --filter manufacturing-frontend exec openapi-typescript ../docs/api/openapi.json -o src/api/generated.ts",
+    "api:generate": "pnpm run api:export && pnpm run api:types"
+  }
+}

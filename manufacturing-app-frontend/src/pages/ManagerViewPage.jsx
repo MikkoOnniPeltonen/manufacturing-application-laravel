@@ -1,12 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
-import api from '../lib/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowDown, ArrowLeft, ArrowUp, Loader2 } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+import { Link } from 'react-router-dom';
+import { apiClient } from '../api/client';
+import { collectionItems } from '../api/collections';
 
 function ManagerViewPage() {
   // const [productionLines, setProductionLines] = useState([]); // Managed by Query
@@ -31,21 +32,25 @@ function ManagerViewPage() {
   const { data: productionLines = [], isLoading: linesLoading } = useQuery({
     queryKey: ['production-lines'],
     queryFn: async () => {
-      const response = await api.get('/production-lines');
-      const lines = response.data;
+      const { data, error } = await apiClient.GET('/v1/production-lines');
+      if (error || !data) throw error ?? new Error('Unable to load production lines.');
+      const lines = collectionItems(data);
       if (!selectedLineId && lines.length > 0) {
         setSelectedLineId(lines[0].id);
       }
       return lines;
-    }
+    },
   });
 
   // 2. Fetch Sales for Selected Line
-  const { data: sales = [], isLoading: salesLoading } = useQuery({
+  const { data: sales = [] } = useQuery({
     queryKey: ['sales', selectedLineId],
     queryFn: async () => {
-      const response = await api.get(`/sales/${selectedLineId}`);
-      return response.data || [];
+      const { data, error } = await apiClient.GET('/v1/sales/{productionLine}', {
+        params: { path: { productionLine: selectedLineId } },
+      });
+      if (error || !data) throw error ?? new Error('Unable to load sales.');
+      return collectionItems(data);
     },
     enabled: !!selectedLineId,
   });
@@ -58,10 +63,11 @@ function ManagerViewPage() {
   // 3. Mutation: Save to Production (Move from Staging to Sales)
   const saveToProductionMutation = useMutation({
     mutationFn: async ({ lineId, saleIds }) => {
-      return api.patch(`/productions/${lineId}`, {
-        sale_ids: saleIds,
-        status: 'in_production',
+      const { error } = await apiClient.PATCH('/v1/productions/{productionLine}', {
+        params: { path: { productionLine: lineId } },
+        body: { sale_ids: saleIds, status: 'in_production' },
       });
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success('Items moved to production');
@@ -75,8 +81,11 @@ function ManagerViewPage() {
 
   // 4. Mutation: Process Item (One by one)
   const processItemMutation = useMutation({
-    mutationFn: async (itemId) => {
-      return api.post(`/productions/process/${itemId}`);
+    mutationFn: async itemId => {
+      const { error } = await apiClient.POST('/v1/productions/process/{sale}', {
+        params: { path: { sale: itemId } },
+      });
+      if (error) throw error;
     },
     // We do NOT invalidate immediately after EACH item to avoid flickering if we loop fast.
     // Instead we invalidate at the end of the batch in the handler.
@@ -169,10 +178,10 @@ function ManagerViewPage() {
 
         await processItemMutation.mutateAsync(item.id);
 
-        // We can optionally manually update local state for visuals if query is slow, 
+        // We can optionally manually update local state for visuals if query is slow,
         // but typically invalidateQueries is fast enough for local dev.
         // If we want immediate feedback "removal" from list, we rely on React Query's eventual consistency or optimistic updates.
-        // For this batch loop, let's just wait for loop to finish to invalidate or verify? 
+        // For this batch loop, let's just wait for loop to finish to invalidate or verify?
         // Actually, mutation is async, so we await it.
 
         processedCount++;
@@ -202,9 +211,7 @@ function ManagerViewPage() {
   const selectedLine = productionLines.find(l => l.id === selectedLineId);
   // Filter out items that are already selected to avoid duplication in UI
   const selectedIds = new Set(selectedItems.map(i => i.id));
-  const pendingSales = sales.filter(
-    s => s.status === 'pending' && !selectedIds.has(s.id),
-  );
+  const pendingSales = sales.filter(s => s.status === 'pending' && !selectedIds.has(s.id));
 
   if (loading) {
     return (
@@ -219,7 +226,10 @@ function ManagerViewPage() {
       <div className="flex gap-6 h-[calc(100vh-100px)]">
         {/* Sidebar - Production Lines */}
         <aside className="w-72 space-y-4 pr-2">
-          <Link to="/" className="flex items-center text-slate-400 hover:text-white transition-colors mb-4">
+          <Link
+            to="/"
+            className="flex items-center text-slate-400 hover:text-white transition-colors mb-4"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Link>
@@ -230,9 +240,10 @@ function ManagerViewPage() {
               onClick={() => !isProcessing && !isSaving && setSelectedLineId(line.id)}
               className={`
                 cursor-pointer transition-all duration-300 rounded-xl overflow-hidden border relative group
-                ${selectedLineId === line.id
-                  ? 'border-blue-500 bg-slate-800 shadow-lg ring-1 ring-blue-500'
-                  : 'border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:border-slate-600'
+                ${
+                  selectedLineId === line.id
+                    ? 'border-blue-500 bg-slate-800 shadow-lg ring-1 ring-blue-500'
+                    : 'border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:border-slate-600'
                 }
                 ${isProcessing || isSaving ? 'opacity-80' : ''}
               `}

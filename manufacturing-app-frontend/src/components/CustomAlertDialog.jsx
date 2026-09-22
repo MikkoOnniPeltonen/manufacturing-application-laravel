@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { useEffect, useRef } from 'react';
 
 function CustomAlertDialog({
   isOpen,
@@ -34,8 +34,14 @@ function CustomAlertDialog({
     onOpenChange?.(false);
   };
 
-  const handleBackdropClick = (e) => {
+  const handleBackdropClick = e => {
     if (e.target === dialogRef.current) {
+      handleCancel();
+    }
+  };
+
+  const handleKeyDown = e => {
+    if (e.key === 'Escape') {
       handleCancel();
     }
   };
@@ -44,6 +50,7 @@ function CustomAlertDialog({
     <dialog
       ref={dialogRef}
       onClick={handleBackdropClick}
+      onKeyDown={handleKeyDown}
       className="backdrop:bg-black/50 bg-slate-800 border border-slate-700 rounded-xl p-0 shadow-2xl max-w-md"
     >
       <div className="p-6 space-y-4">
@@ -59,10 +66,7 @@ function CustomAlertDialog({
           >
             {cancelText}
           </Button>
-          <Button
-            onClick={handleConfirm}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
+          <Button onClick={handleConfirm} className="bg-blue-600 hover:bg-blue-700 text-white">
             {confirmText}
           </Button>
         </div>

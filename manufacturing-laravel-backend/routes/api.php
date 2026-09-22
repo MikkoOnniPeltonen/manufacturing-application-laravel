@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProductionController;
 use App\Http\Controllers\Api\ProductionLineController;
 use App\Http\Controllers\Api\SalesController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,11 +20,14 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Public routes
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/reset-demo', function () {
-    \Illuminate\Support\Facades\Artisan::call('reset:demo');
-    return response()->json(['message' => 'Demo data reset successfully']);
-});
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+if (app()->environment(['local', 'testing']) && config('app.demo_mode')) {
+    Route::post('/reset-demo', function () {
+        Artisan::call('reset:demo');
+
+        return response()->json(['message' => 'Demo data reset successfully']);
+    })->middleware('throttle:demo-reset');
+}
 
 // Protected routes - require authentication
 Route::middleware('auth:sanctum')->group(function () {
@@ -63,6 +68,6 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // History Route
-        Route::get('/production-lines/{productionLine}/history', [\App\Http\Controllers\Api\HistoryController::class, 'show']);
+        Route::get('/production-lines/{productionLine}/history', [HistoryController::class, 'show']);
     });
 });

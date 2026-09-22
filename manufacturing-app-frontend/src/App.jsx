@@ -1,45 +1,51 @@
-import AllCustomersPage from './pages/AllCustomersPage';
-import CreateCustomerPage from './pages/CreateCustomerPage';
-import CustomerPage from './pages/CustomerPage';
-import EditCustomerPage from './pages/EditCustomerPage';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import ManagerViewPage from './pages/ManagerViewPage';
-import ProductionHistoryPage from './pages/ProductionHistoryPage';
-
 import Navbar from './components/Navbar';
 import { AdminRoute, ManagerRoute, ProtectedRoute } from './components/ProtectedRoute';
 
+import { Suspense, lazy } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { Route, Routes } from 'react-router-dom';
 import './App.css';
+
+const AllCustomersPage = lazy(() => import('./pages/AllCustomersPage'));
+const CreateCustomerPage = lazy(() => import('./pages/CreateCustomerPage'));
+const CustomerPage = lazy(() => import('./pages/CustomerPage'));
+const EditCustomerPage = lazy(() => import('./pages/EditCustomerPage'));
+const HomePage = lazy(() => import('./pages/HomePage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const ManagerViewPage = lazy(() => import('./pages/ManagerViewPage'));
+const ProductionHistoryPage = lazy(() => import('./pages/ProductionHistoryPage'));
+
+function RouteLoadingFallback() {
+  return (
+    <output className="min-h-screen flex items-center justify-center" aria-live="polite">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      <span className="sr-only">Loading page</span>
+    </output>
+  );
+}
 
 function App() {
   return (
     <>
       <Navbar />
-      <Routes>
-        {/* Public route */}
-        <Route path="/login" element={<LoginPage />} />
-
-        {/* Protected routes - require authentication */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<HomePage />} />
-          {/* Manager-only routes */}
-          <Route element={<ManagerRoute />}>
-            <Route path="/manager-view" element={<ManagerViewPage />} />
+      <Suspense fallback={<RouteLoadingFallback />}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<HomePage />} />
+            <Route element={<ManagerRoute />}>
+              <Route path="/manager-view" element={<ManagerViewPage />} />
+            </Route>
+            <Route element={<AdminRoute />}>
+              <Route path="/admin/history" element={<ProductionHistoryPage />} />
+              <Route path="/customers" element={<AllCustomersPage />} />
+              <Route path="/customers/:customerId" element={<CustomerPage />} />
+              <Route path="/customers/:customerId/edit" element={<EditCustomerPage />} />
+              <Route path="/customers/create" element={<CreateCustomerPage />} />
+            </Route>
           </Route>
-
-          {/* Admin-only routes */}
-          <Route element={<AdminRoute />}>
-            <Route path="/admin/history" element={<ProductionHistoryPage />} />
-            <Route path="/customers" element={<AllCustomersPage />} />
-            <Route path="/customers/:customerId" element={<CustomerPage />} />
-            <Route path="/customers/:customerId/edit" element={<EditCustomerPage />} />
-            <Route path="/customers/create" element={<CreateCustomerPage />} />
-          </Route>
-        </Route>
-      </Routes>
+        </Routes>
+      </Suspense>
       <Toaster position="bottom-right" reverseOrder={false} />
     </>
   );

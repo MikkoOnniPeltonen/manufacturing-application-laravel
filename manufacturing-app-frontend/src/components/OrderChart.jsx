@@ -67,7 +67,7 @@ function OrderChart({ chartData, productionLines }) {
           />
           <Tooltip
             cursor={{ fill: '#1e293b', opacity: 0.5 }}
-            formatter={(value) => [`${value}%`, undefined]}
+            formatter={value => [`${value}%`, undefined]}
             contentStyle={{
               backgroundColor: '#0f172a',
               borderColor: '#334155',

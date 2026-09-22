@@ -7,7 +7,6 @@ use App\Http\Requests\GetHistoryRequest;
 use App\Models\ProductionLine;
 use App\Services\HistoryService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class HistoryController extends Controller
 {
@@ -22,7 +21,7 @@ class HistoryController extends Controller
     {
         try {
             // Check if we are in Range/Search mode (either dates or filters provided)
-            if ($request->hasAny(['start_date', 'end_date', 'product_name', 'customer_name', 'status', 'min_quantity', 'max_quantity', 'search_mode'])) {
+            if ($request->hasAny(['start_date', 'end_date', 'product_name', 'customer_name', 'status', 'min_quantity', 'max_quantity', 'search_mode', 'page', 'limit', 'per_page'])) {
                 $filters = [
                     'product' => $request->input('product_name'),
                     'customer' => $request->input('customer_name'),
@@ -35,7 +34,9 @@ class HistoryController extends Controller
                     $productionLine->id,
                     $request->input('start_date'),
                     $request->input('end_date'),
-                    $filters
+                    $filters,
+                    $request->input('limit', $request->input('per_page')),
+                    $request->input('page', 1)
                 );
             } else {
                 // Default to timestamp snapshot if no range provided

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\SaleStatus;
+use App\Exceptions\ProductionException;
 use App\Models\ProductionLine;
 use App\Models\ProductionLog;
 use App\Models\Sale;
@@ -17,17 +19,17 @@ class ProductionService
     {
         return DB::transaction(function () use ($productionLineId) {
             $pendingSales = Sale::where('production_line_id', $productionLineId)
-                ->where('status', 'pending')
+                ->where('status', SaleStatus::Pending)
                 ->lockForUpdate() // Prevent race conditions
                 ->get();
 
             $count = 0;
             foreach ($pendingSales as $sale) {
                 $oldStatus = $sale->status;
-                $object = $sale->update(['status' => 'in_production']);
+                $object = $sale->update(['status' => SaleStatus::InProduction]);
 
                 if ($object) {
-                    $this->logStatusChange($sale->id, $oldStatus, 'in_production');
+                    $this->logStatusChange($sale->id, $oldStatus->value, SaleStatus::InProduction->value);
                     $count++;
                 }
             }
@@ -48,10 +50,16 @@ class ProductionService
                 ->get();
 
             foreach ($sales as $sale) {
-                if ($sale->status !== $status) {
-                    $oldStatus = $sale->status;
-                    $sale->update(['status' => $status]);
-                    $this->logStatusChange($sale->id, $oldStatus, $status);
+                $oldStatus = $sale->status;
+                $targetStatus = SaleStatus::from($status);
+
+                if ($oldStatus !== $targetStatus) {
+                    if (! $oldStatus->canTransitionTo($targetStatus)) {
+                        throw new ProductionException('The sale cannot transition to the requested status.');
+                    }
+
+                    $sale->update(['status' => $targetStatus]);
+                    $this->logStatusChange($sale->id, $oldStatus->value, $targetStatus->value);
                 }
             }
         });
@@ -64,35 +72,38 @@ class ProductionService
     public function processItem(Sale $sale): array
     {
         return DB::transaction(function () use ($sale) {
-            // Refresh to get latest status
-            $sale->refresh();
+            // Lock the current row so concurrent workers cannot process it twice.
+            $sale = Sale::query()
+                ->whereKey($sale->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            if ($sale->status !== 'in_production') {
-                throw new \Exception('Sale is not in production');
+            if ($sale->status !== SaleStatus::InProduction) {
+                throw new ProductionException('Sale is not in production.');
             }
 
             $oldStatus = $sale->status;
 
             // Update Sale
             $sale->update([
-                'status' => 'delivered',
+                'status' => SaleStatus::Delivered,
                 'delivered_at' => Carbon::now(),
             ]);
 
             // Log change
-            $this->logStatusChange($sale->id, $oldStatus, 'delivered');
+            $this->logStatusChange($sale->id, $oldStatus->value, SaleStatus::Delivered->value);
 
             // Note: DeliveredOrder creation is REMOVED as per Phase 2 plan.
             // Note: has_sales flag on ProductionLine is updated via Observer.
 
             // Metrics for return value
             $activeSalesCount = Sale::where('production_line_id', $sale->production_line_id)
-                ->whereIn('status', ['pending', 'in_production'])
+                ->whereIn('status', [SaleStatus::Pending, SaleStatus::InProduction])
                 ->count();
 
             return [
                 'sale' => $sale->load(['customer', 'product']),
-                'remaining_count' => $activeSalesCount
+                'remaining_count' => $activeSalesCount,
             ];
         });
     }
@@ -106,7 +117,7 @@ class ProductionService
             'sale_id' => $saleId,
             'from_status' => $from,
             'to_status' => $to,
-            'meta_data' => ['timestamp' => Carbon::now()->toIso8601String()]
+            'meta_data' => ['timestamp' => Carbon::now()->toIso8601String()],
         ]);
     }
 }

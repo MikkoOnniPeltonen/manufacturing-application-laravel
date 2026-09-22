@@ -4,10 +4,12 @@
 
 ## 🏗️ Tech Stack
 
-- **Framework**: Laravel 12.49
-- **Authentication**: Laravel Sanctum (Session-based)
-- **Authorization**: Spatie Laravel Permission (RBAC)
-- **Database**: SQLite (Default for Dev) / PostgreSQL (Production)
+- **Runtime**: PHP 8.5
+- **Framework**: Laravel 13
+- **Authentication**: Laravel Sanctum (HttpOnly cookie sessions)
+- **Authorization**: Spatie Laravel Permission 8 (RBAC)
+- **Database**: PostgreSQL 17 (SQLite is used for isolated tests)
+- **Cache and queues**: Valkey/Redis with Laravel's Redis queue driver
 - **API**: RESTful architecture with resource controllers
 
 ## 🚀 Setup Instructions
@@ -51,6 +53,44 @@ php artisan config:clear
 
 # Run tests
 php artisan test
+```
+
+Queue and scheduler processes:
+
+```bash
+composer queue:work
+composer schedule:work
+php artisan queue:failed
+```
+
+Use a process supervisor in staging/production to restart workers after deploys.
+Horizon is intentionally deferred until a stable Laravel 13-compatible release is
+available; the application uses Laravel's Redis queue worker directly in the meantime.
+
+Quality checks:
+
+```bash
+composer format:check
+composer analyse
+composer audit
+```
+
+Operational endpoints:
+
+- `GET /up` — Laravel application health.
+- `GET /ready` — database and cache/Valkey readiness.
+
+API responses include an `X-Request-ID` header. Include that value when reporting
+failures so logs can be correlated across requests and queue work.
+
+## OpenAPI contract
+
+The API contract is generated from the Laravel routes and request definitions with
+[Scramble](https://github.com/dedoc/scramble). The committed contract is at
+`../docs/api/openapi.json`, and the React workspace generates TypeScript definitions from it.
+
+```bash
+pnpm api:generate
 ```
 
 ## 📊 API Endpoints Snapshot

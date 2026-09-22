@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use App\Http\Resources\SaleResource;
+use App\Enums\SaleStatus;
 use App\Models\Customer;
+use App\Models\Product;
 use App\Models\ProductionLine;
 use App\Models\Sale;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class SalesService
 {
@@ -29,10 +29,10 @@ class SalesService
             $customers = Customer::whereHas('selectedProducts', function ($query) use ($lineProductIds) {
                 $query->whereIn('products.id', $lineProductIds);
             })->with([
-                        'selectedProducts' => function ($query) use ($lineProductIds) {
-                            $query->whereIn('products.id', $lineProductIds);
-                        }
-                    ])->get();
+                'selectedProducts' => function ($query) use ($lineProductIds) {
+                    $query->whereIn('products.id', $lineProductIds);
+                },
+            ])->get();
 
             if ($customers->isEmpty()) {
                 throw new \Exception('No eligible customers found.');
@@ -41,7 +41,9 @@ class SalesService
             $sales = [];
             for ($i = 0; $i < $count; $i++) {
                 $customer = $customers->random();
-                $product = $customer->selectedProducts->random();
+                $product = Product::query()
+                    ->whereKey($customer->selectedProducts()->pluck('products.id')->random())
+                    ->firstOrFail();
 
                 $sale = Sale::create([
                     'product_id' => $product->id,
@@ -66,19 +68,30 @@ class SalesService
     {
         DB::transaction(function () use ($productionLineId) {
             Sale::where('production_line_id', $productionLineId)
-                ->where('status', 'pending')
+                ->where('status', SaleStatus::Pending)
                 ->delete();
         });
     }
+
     /**
      * Update priorities for a list of sales.
      */
     public function updatePriorities(array $saleIds): void
     {
         DB::transaction(function () use ($saleIds) {
+            $sales = Sale::query()
+                ->whereIn('id', $saleIds)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            if ($sales->count() !== count(array_unique($saleIds))) {
+                throw new \InvalidArgumentException('One or more sales could not be found.');
+            }
+
             foreach ($saleIds as $index => $id) {
                 // Lower index = Higher priority (1, 2, 3...)
-                Sale::where('id', $id)->update(['priority' => $index + 1]);
+                $sales[$id]->update(['priority' => $index + 1]);
             }
         });
     }

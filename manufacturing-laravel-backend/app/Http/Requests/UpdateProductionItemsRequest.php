@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\SaleStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProductionItemsRequest extends FormRequest
 {
@@ -16,7 +18,7 @@ class UpdateProductionItemsRequest extends FormRequest
         return [
             'sale_ids' => 'required|array',
             'sale_ids.*' => 'uuid',
-            'status' => 'required|in:pending,in_production,completed',
+            'status' => ['required', Rule::enum(SaleStatus::class)],
         ];
     }
 }

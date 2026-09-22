@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\SaleStatus;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProductionLine;
@@ -16,8 +17,11 @@ class ProductionTest extends TestCase
     use RefreshDatabase;
 
     protected $manager;
+
     protected $productionLine;
+
     protected $product;
+
     protected $customer;
 
     protected function setUp(): void
@@ -30,9 +34,9 @@ class ProductionTest extends TestCase
         $this->manager = User::factory()->create();
         $this->manager->assignRole('manager');
 
-        $this->productionLine = ProductionLine::create(['name' => 'Test Line', 'status' => 'active', 'capacity' => 100]);
+        $this->productionLine = ProductionLine::create(['name' => 'Test Line', 'capacity' => 100]);
         $this->product = Product::create(['name' => 'Test Product', 'production_line_id' => $this->productionLine->id]);
-        $this->customer = Customer::create(['name' => 'Test Customer', 'email' => 'test@example.com']);
+        $this->customer = Customer::create(['name' => 'Test Customer', 'contact' => 'test@example.com']);
     }
 
     public function test_manager_can_start_production()
@@ -42,7 +46,7 @@ class ProductionTest extends TestCase
             'production_line_id' => $this->productionLine->id,
             'product_id' => $this->product->id,
             'customer_id' => $this->customer->id,
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
 
         $response = $this->actingAs($this->manager, 'sanctum')
@@ -61,7 +65,7 @@ class ProductionTest extends TestCase
             'production_line_id' => $this->productionLine->id,
             'product_id' => $this->product->id,
             'customer_id' => $this->customer->id,
-            'status' => 'in_production'
+            'status' => 'in_production',
         ]);
 
         $response = $this->actingAs($this->manager, 'sanctum')
@@ -70,7 +74,23 @@ class ProductionTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonStructure(['sale', 'remaining_count']);
 
-        $this->assertEquals('delivered', $sale->fresh()->status);
+        $this->assertSame(SaleStatus::Delivered, $sale->fresh()->status);
         $this->assertNotNull($sale->fresh()->delivered_at);
+    }
+
+    public function test_delivered_item_cannot_be_processed_again(): void
+    {
+        $sale = Sale::factory()->create([
+            'production_line_id' => $this->productionLine->id,
+            'product_id' => $this->product->id,
+            'customer_id' => $this->customer->id,
+            'status' => SaleStatus::Delivered,
+        ]);
+
+        $response = $this->actingAs($this->manager, 'sanctum')
+            ->postJson("/api/v1/productions/process/{$sale->id}");
+
+        $response->assertStatus(409)
+            ->assertJsonPath('code', 'production_invalid_state');
     }
 }

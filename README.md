@@ -1,295 +1,217 @@
 # Manufacturing Management System
 
-A comprehensive production management system designed to streamline manufacturing workflows, manage customer relationships, and track production history. Built with a modern tech stack featuring Laravel 12 and React 19.
+Portfolio-grade manufacturing workflow application built as a Laravel API and a
+separate React SPA. The project demonstrates a modular monolith, typed API
+contracts, transactional domain workflows, cookie-based authentication, and
+production-oriented verification.
 
-![Manufacturing Dashboard](https://img.shields.io/badge/Status-Production%20Ready-success)
-![Laravel](https://img.shields.io/badge/Laravel-12.49-red)
-![React](https://img.shields.io/badge/React-19.0-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
-
-## 🌟 Features
-
-### Role-Based Access Control (RBAC)
-- **Manager Role**: Full access to production workflows and line management
-- **Admin Role**: Complete system access including customer database and historical analytics
-
-### Production Management
-- **Interactive Kanban Workflow**: Drag-and-drop interface for managing production stages
-  - Sales Orders → Staging → In Production → Completed
-- **Real-time Production Tracking**: Monitor active production lines with live status updates
-- **Batch Processing**: Queue and process multiple orders sequentially
-- **Production Velocity Analytics**: Visual charts showing completion rates and pending vs. delivered ratios
-
-### Customer Relationship Management (Admin Only)
-- **Customer Database**: Comprehensive customer information management
-- **Advanced Search & Filtering**: Sortable tables with pagination
-- **Customer Analytics**: Track order history and delivery performance per customer
-- **Visual Charts**: Compare customer-specific metrics against production line averages
-
-### Historical Analytics (Admin Only)
-- **Time-Based Queries**: View production state at any point in time
-- **Advanced Search**: Filter by product, customer, status, and quantity ranges
-- **Read-Only History Mode**: Safely explore past production states without affecting live data
-
-### User Experience
-- **Modern Dark Theme**: Sleek slate-based UI with vibrant accent colors
-- **Responsive Design**: Optimized for desktop workflows
-- **Toast Notifications**: Consistent feedback for all user actions
-- **Auto-animations**: Smooth transitions for enhanced UX
-
-## 🏗️ Architecture
+## Stack
 
 ### Backend
-- **Framework**: Laravel 12.49
-- **Authentication**: Laravel Sanctum (Session-based)
-- **Authorization**: Spatie Laravel Permission (RBAC)
-- **Database**: SQLite
-- **API**: RESTful architecture with resource controllers
+
+- PHP 8.5
+- Laravel 13
+- PostgreSQL 17
+- Valkey 8 / Redis-compatible cache, sessions, and queues
+- Laravel Sanctum HttpOnly cookie sessions
+- Spatie Laravel Permission 8 for RBAC
+- Scramble-generated OpenAPI 3.1 contract
+- Larastan/PHPStan and Laravel Pint
 
 ### Frontend
-- **Framework**: React 19 with Vite
-- **Routing**: React Router DOM v7
-- **State Management**: React Hooks & TanStack Query v5 (Server State)
-- **Data Fetching**: TanStack Query v5
-- **UI Components**: Radix UI primitives with custom styling
-- **Styling**: Tailwind CSS with custom design tokens
-- **Charts**: Recharts for data visualization
-- **HTTP Client**: Axios with interceptors
 
-## 📋 Prerequisites
+- React 19
+- Vite
+- React Router
+- TanStack Query
+- React Table
+- Radix UI primitives
+- Tailwind CSS
+- Recharts
+- `openapi-fetch` with generated TypeScript definitions
+- pnpm workspace
 
-- **PHP**: ^8.2
-- **Composer**: Latest version
-- **Node.js**: ^18.0
-- **SQLite**: (Built-in)
-- **npm** or **yarn**
+## Product capabilities
 
-## 🚀 Installation
+- Role-based manager and administrator workflows
+- Production-line and sales-order management
+- Explicit sale state transitions:
+  `pending` → `in_production` → `delivered`
+- Transactional production updates with row locking
+- Duplicate-processing protection
+- Customer and product association management
+- Production history reconstruction and filtering
+- Bounded pagination and query limits
+- Route-level frontend code splitting
+- Request IDs and structured log context
+- Application health and dependency readiness checks
+- Redis/Valkey queue worker and scheduler support
 
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd task_manager
+## Repository layout
+
+```text
+.
+├── manufacturing-laravel-backend/   Laravel API
+├── manufacturing-app-frontend/      React/Vite SPA
+├── docs/api/openapi.json             Generated API contract
+├── compose.yaml                      PostgreSQL and Valkey development services
+├── package.json                      Root pnpm scripts
+└── .github/workflows/ci.yml          CI quality gates
 ```
 
-### 2. Backend Setup (Laravel)
+## Requirements
+
+- PHP 8.5+
+- Composer 2+
+- Node.js 22+
+- pnpm 12+
+- Docker Desktop (recommended for PostgreSQL and Valkey)
+
+## Quick start
+
+### 1. Install dependencies
+
+```bash
+composer install --working-dir=manufacturing-laravel-backend
+pnpm install
+```
+
+### 2. Start infrastructure
+
+```bash
+docker compose up -d
+```
+
+This starts PostgreSQL on `localhost:5432` and Valkey on `localhost:6379`.
+
+### 3. Configure Laravel
+
 ```bash
 cd manufacturing-laravel-backend
-
-# Install PHP dependencies
-composer install
-
-# Copy environment file
 cp .env.example .env
-
-# Generate application key
 php artisan key:generate
-
-# Configure your database in .env
-# DB_CONNECTION=sqlite
-# (No further configuration needed for SQLite)
-
-# Run migrations and seeders
 php artisan migrate --seed
+cd ..
+```
 
-# Start the Laravel development server
+The example environment is configured for PostgreSQL, Valkey, Redis sessions,
+Redis queues, and a local React origin.
+
+### 4. Run the application
+
+In separate terminals:
+
+```bash
+cd manufacturing-laravel-backend
 php artisan serve
 ```
 
-The backend will be available at `http://localhost:8000`
-
-### 3. Frontend Setup (React)
 ```bash
-cd ../manufacturing-app-frontend
-
-# Install Node dependencies
-npm install
-
-# Start the Vite development server
-npm run dev
+pnpm dev:frontend
 ```
 
-The frontend will be available at `http://localhost:5173`
+The API is available at `http://localhost:8000` and the SPA at
+`http://localhost:5173`.
 
-## 👥 Default User Accounts
+For a combined local workflow, Laravel also provides:
 
-The system comes with pre-configured test accounts:
-
-| Role    | Email                        | Password          |
-|---------|------------------------------|-------------------|
-| Manager | manager@manufacturing.com    | SecurePass2026!   |
-| Admin   | admin@manufacturing.com      | SecurePass2026!   |
-
-## 🎯 Usage Guide
-
-### Manager Workflow
-1. **Login** with manager credentials
-2. **View Dashboard**: See all active production lines and their status
-3. **Access Manager View**: Click on any production line card
-4. **Manage Production**:
-   - Double-click sales orders to stage them
-   - Reorder staged items using arrow buttons
-   - Confirm to move items to production
-   - Start production to process items sequentially
-5. **Monitor Progress**: Real-time updates as items are processed
-
-### Admin Workflow
-1. **Login** with admin credentials
-2. **Access All Manager Features**: Full production management capabilities
-3. **Manage Customers**:
-   - Navigate to `/customers` via the navbar
-   - Add, edit, or view customer details
-   - Analyze customer-specific metrics
-4. **View Production History**:
-   - Click "View History Mode" on the dashboard
-   - Select date ranges or use advanced search
-   - Explore historical production states
-
-## 📁 Project Structure
-
-```
-task_manager/
-├── manufacturing-laravel-backend/     # Laravel API Backend
-│   ├── app/
-│   │   ├── Http/Controllers/         # API Controllers
-│   │   ├── Models/                   # Eloquent Models
-│   │   └── Services/                 # Business Logic
-│   ├── database/
-│   │   ├── migrations/               # Database Migrations
-│   │   └── seeders/                  # Data Seeders
-│   └── routes/
-│       └── api.php                   # API Routes
-│
-└── manufacturing-app-frontend/        # React Frontend
-    ├── src/
-    │   ├── components/               # Reusable Components
-    │   │   ├── ui/                   # UI Primitives
-    │   │   ├── Navbar.jsx
-    │   │   └── ProtectedRoute.jsx
-    │   ├── contexts/
-    │   │   └── AuthContext.jsx       # Authentication State
-    │   ├── lib/
-    │   │   └── api.js                # Axios Configuration
-    │   └── pages/                    # Route Components
-    │       ├── HomePage.jsx
-    │       ├── LoginPage.jsx
-    │       ├── ManagerViewPage.jsx
-    │       ├── AllCustomersPage.jsx
-    │       └── ProductionHistoryPage.jsx
-    └── package.json
-```
-
-## 🔐 Security Features
-
-- **Session-based Authentication**: Secure token management via Laravel Sanctum
-- **CSRF Protection**: Built-in Laravel CSRF middleware
-- **Role-based Authorization**: Spatie Permission package for granular access control
-- **Protected Routes**: Frontend route guards based on user roles
-- **Password Hashing**: Bcrypt encryption for user passwords
-- **API Token Validation**: Automatic token verification on each request
-
-## 🛠️ Development
-
-### Backend Commands
 ```bash
-# Run migrations
-php artisan migrate
-
-# Seed database
-php artisan db:seed
-
-# Clear cache
-php artisan cache:clear
-php artisan config:clear
-
-# Run tests
-php artisan test
+cd manufacturing-laravel-backend
+composer dev
 ```
 
-### Frontend Commands
+## Demo accounts
+
+Seeded local/testing environments include:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Manager | `manager@manufacturing.com` | `SecurePass2026!` |
+| Admin | `admin@manufacturing.com` | `SecurePass2026!` |
+
+These credentials are for local demonstration only and must not be used in a
+deployed environment. The demo reset endpoint is restricted to local/testing
+environments.
+
+## API contract workflow
+
+Laravel routes, requests, resources, and response types are exported with
+[Scramble](https://github.com/dedoc/scramble). The generated contract is committed
+at [docs/api/openapi.json](./docs/api/openapi.json), and TypeScript definitions
+are generated for the React client.
+
 ```bash
-# Development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Lint code
-npm run lint
-
-# Format code
-npm run format
+pnpm api:generate
 ```
 
-## 📊 API Endpoints
+The CI workflow regenerates both files and fails if the working tree changes,
+preventing contract drift.
 
-### Authentication
-- `POST /api/login` - User login
-- `POST /api/logout` - User logout
-- `GET /api/me` - Get authenticated user
+The frontend client is defined in
+[manufacturing-app-frontend/src/api/client.ts](./manufacturing-app-frontend/src/api/client.ts).
 
-### Production Lines
-- `GET /api/production-lines` - List all production lines
-- `GET /api/production-lines/{id}/history` - Get historical data
+## Quality checks
 
-### Sales
-- `GET /api/sales` - List sales orders
-- `GET /api/sales/{lineId}` - Get sales for specific line
-- `POST /api/sales/generate` - Generate random sales (Admin)
-- `DELETE /api/sales/clear/{lineId}` - Clear pending sales
+Run the same core checks used by CI:
 
-### Production
-- `PATCH /api/productions/{lineId}` - Update production status
-- `POST /api/productions/process/{saleId}` - Process a sale item
+```bash
+cd manufacturing-laravel-backend
+composer test
+composer analyse
+composer format:check
+composer audit
+cd ..
 
-### Customers (Admin Only)
-- `GET /api/customers` - List all customers
-- `GET /api/customers/{id}` - Get customer details
-- `POST /api/customers` - Create new customer
-- `PUT /api/customers/{id}` - Update customer
-- `DELETE /api/customers/{id}` - Delete customer
+pnpm lint:frontend
+pnpm build:frontend
+pnpm api:generate
+```
 
-## 🎨 Design System
+The current backend suite covers production transitions, duplicate processing
+protection, pagination limits, readiness checks, request correlation, sales
+generation, and priority reordering.
 
-### Color Palette
-- **Background**: Slate 900/950 (Dark theme)
-- **Primary**: Blue 600 (Actions, Links)
-- **Success**: Emerald 500 (Completed states)
-- **Warning**: Amber 500 (Pending states)
-- **Danger**: Red 500 (Errors)
-- **Info**: Purple 500 (In-progress states)
+## Operations
 
-### Typography
-- **Headings**: Bold, White text
-- **Body**: Slate 300/400
-- **Labels**: Slate 500
+Health and readiness endpoints:
 
-## 🤝 Contributing
+```text
+GET /up
+GET /ready
+```
 
-Contributions are welcome! Please follow these steps:
+`/ready` verifies database and cache connectivity and returns `503` when a
+dependency is unavailable. API responses include an `X-Request-ID` header for
+log correlation.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Queue and scheduler commands:
 
-## 📝 License
+```bash
+cd manufacturing-laravel-backend
+composer queue:work
+composer schedule:work
+php artisan queue:failed
+```
 
-This project is licensed under the MIT License.
+Use a process supervisor in staging/production to restart workers after deploys.
+Horizon is intentionally deferred until a stable Laravel 13-compatible release
+is available; native Laravel Redis workers are used in the meantime.
 
-## 🙏 Acknowledgments
+## Security design
 
-- **Laravel Team** - For the excellent PHP framework
-- **React Team** - For the powerful UI library
-- **Radix UI** - For accessible component primitives
-- **Tailwind CSS** - For the utility-first CSS framework
-- **Spatie** - For the Laravel Permission package
+- Sanctum cookie sessions for the first-party SPA
+- CSRF initialization before login
+- HttpOnly session cookies
+- Stateful API middleware
+- Login throttling
+- Role-based route authorization
+- Environment-restricted demo reset
+- Explicit request validation
+- Enum-backed domain state transitions
+- Transaction boundaries around multi-record updates
+- Row-level locking for concurrent production processing
+- Dependency auditing in CI
 
-## 📧 Support
+## License
 
-For support, please open an issue in the repository or contact the development team.
-
----
-
-**Built with ❤️ for efficient manufacturing management**
+This project is released under the MIT License.

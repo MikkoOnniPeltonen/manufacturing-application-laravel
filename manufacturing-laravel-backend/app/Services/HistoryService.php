@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\SaleStatus;
 use App\Http\Resources\SaleResource;
 use App\Models\ProductionLog;
 use App\Models\Sale;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 
 class HistoryService
 {
@@ -38,10 +38,10 @@ class HistoryService
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            $statusAtTime = 'pending'; // Default initial status
+            $statusAtTime = SaleStatus::Pending; // Default initial status
 
             if ($lastLog) {
-                $statusAtTime = $lastLog->to_status;
+                $statusAtTime = SaleStatus::from($lastLog->to_status);
             } else {
                 // No logs yet at that time.
                 // If the item was created before target time, it was pending.
@@ -51,9 +51,9 @@ class HistoryService
             // Manually set the status on the model instance for the resource to use
             $sale->status = $statusAtTime;
 
-            if ($statusAtTime === 'pending') {
+            if ($statusAtTime === SaleStatus::Pending) {
                 $pending->push($sale);
-            } elseif ($statusAtTime === 'in_production') {
+            } elseif ($statusAtTime === SaleStatus::InProduction) {
                 $inProduction->push($sale);
             }
             // 'delivered' items are ignored as per requirement (or we could return them if needed)
@@ -69,7 +69,7 @@ class HistoryService
     /**
      * Get all sales that were active (created or moved) within a specific time range.
      */
-    public function getSalesActivity(int $productionLineId, ?string $startDate, ?string $endDate, array $filters = []): array
+    public function getSalesActivity(int $productionLineId, ?string $startDate, ?string $endDate, array $filters = [], ?int $limit = null, ?int $page = 1): array
     {
         $start = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
         $end = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now()->endOfDay();
@@ -84,7 +84,7 @@ class HistoryService
                         $q->whereBetween('created_at', [$start, $end]);
                     }
                     $q->orderBy('created_at', 'desc');
-                }
+                },
             ])
             ->withTrashed()
             ->orderBy('created_at', 'desc');
@@ -100,37 +100,51 @@ class HistoryService
         }
 
         // Apply Filters
-        if (!empty($filters['product'])) {
+        if (! empty($filters['product'])) {
             $query->whereHas('product', function ($q) use ($filters) {
                 $q->where('name', 'like', "%{$filters['product']}%");
             });
         }
 
-        if (!empty($filters['customer'])) {
+        if (! empty($filters['customer'])) {
             $query->whereHas('customer', function ($q) use ($filters) {
                 $q->where('name', 'like', "%{$filters['customer']}%");
             });
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['min_quantity'])) {
+        if (! empty($filters['min_quantity'])) {
             $query->where('quantity', '>=', $filters['min_quantity']);
         }
 
-        if (!empty($filters['max_quantity'])) {
+        if (! empty($filters['max_quantity'])) {
             $query->where('quantity', '<=', $filters['max_quantity']);
         }
 
-        $sales = $query->get();
+        if ($limit !== null) {
+            $sales = $query->paginate(min(max((int) $limit, 1), 100), ['*'], 'page', max((int) $page, 1));
+            $salesPayload = [
+                'data' => SaleResource::collection($sales->items())->resolve(),
+                'current_page' => $sales->currentPage(),
+                'per_page' => $sales->perPage(),
+                'total' => $sales->total(),
+                'last_page' => $sales->lastPage(),
+                'from' => $sales->firstItem(),
+                'to' => $sales->lastItem(),
+            ];
+        } else {
+            $sales = $query->get();
+            $salesPayload = SaleResource::collection($sales);
+        }
 
         return [
-            'sales' => SaleResource::collection($sales),
+            'sales' => $salesPayload,
             'start_date' => $start->toIso8601String(),
             'end_date' => $end->toIso8601String(),
-            'mode' => 'search'
+            'mode' => 'search',
         ];
     }
 }

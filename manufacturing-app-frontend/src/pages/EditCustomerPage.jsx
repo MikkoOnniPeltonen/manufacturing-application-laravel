@@ -1,12 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '../api/client';
 import CustomAlertDialog from '../components/CustomAlertDialog';
 import CustomerForm from '../components/CustomerForm';
-import api from '../lib/api';
 
 function EditCustomerPage() {
   const queryClient = useQueryClient();
@@ -20,22 +20,32 @@ function EditCustomerPage() {
   const backPath = location.state?.from || '/customers';
 
   // Fetch Customer
-  const { data: customer, isLoading: loading, isError } = useQuery({
+  const { data: customer, isLoading: loading } = useQuery({
     queryKey: ['customer', customerId],
     queryFn: async () => {
-      const response = await api.get(`/customers/${customerId}`);
-      return response.data;
+      const { data, error } = await apiClient.GET('/v1/customers/{customer}', {
+        params: { path: { customer: Number(customerId) } },
+      });
+      if (error || !data) throw error ?? new Error('Unable to load customer.');
+      return data;
     },
     onError: () => {
       setErrorMessage('Failed to fetch customer data.');
       setErrorDialogOpen(true);
-    }
+    },
   });
 
   // Edit Mutation
   const editCustomerMutation = useMutation({
-    mutationFn: async (updatedCustomer) => {
-      return api.put(`/customers/${customerId}`, updatedCustomer);
+    mutationFn: async updatedCustomer => {
+      const { data, error } = await apiClient.PUT('/v1/customers/{customer}', {
+        params: { path: { customer: Number(customerId) } },
+        body: {
+          ...updatedCustomer,
+        },
+      });
+      if (error || !data) throw error ?? new Error('Unable to update customer.');
+      return data;
     },
     onSuccess: () => {
       toast.success('Customer updated successfully!');
@@ -43,27 +53,30 @@ function EditCustomerPage() {
       queryClient.invalidateQueries(['customer', customerId]);
       setTimeout(() => navigate(backPath), 1500);
     },
-    onError: (error) => {
+    onError: error => {
       console.error(error);
       setErrorMessage('Failed to update customer.');
       setErrorDialogOpen(true);
-    }
+    },
   });
 
   // Delete Mutation
   const deleteCustomerMutation = useMutation({
     mutationFn: async () => {
-      return api.delete(`/customers/${customerId}`);
+      const { error } = await apiClient.DELETE('/v1/customers/{customer}', {
+        params: { path: { customer: Number(customerId) } },
+      });
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success('Customer deleted!');
       queryClient.invalidateQueries(['customers']);
       setTimeout(() => navigate('/customers'), 1500);
     },
-    onError: (error) => {
+    onError: error => {
       console.error(error);
       toast.error('Failed to delete customer.');
-    }
+    },
   });
 
   async function handleEditCustomer(updatedCustomer) {

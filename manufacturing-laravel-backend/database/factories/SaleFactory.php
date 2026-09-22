@@ -5,10 +5,11 @@ namespace Database\Factories;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProductionLine;
+use App\Models\Sale;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Sale>
+ * @extends Factory<Sale>
  */
 class SaleFactory extends Factory
 {

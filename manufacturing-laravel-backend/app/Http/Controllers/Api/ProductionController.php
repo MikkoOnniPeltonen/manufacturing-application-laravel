@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\SaleStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateProductionItemsRequest;
 use App\Http\Resources\SaleResource;
@@ -9,7 +10,6 @@ use App\Models\ProductionLine;
 use App\Models\Sale;
 use App\Services\ProductionService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ProductionController extends Controller
 {
@@ -23,7 +23,7 @@ class ProductionController extends Controller
     public function getItems(ProductionLine $productionLine): JsonResponse
     {
         $items = Sale::where('production_line_id', $productionLine->id)
-            ->where('status', 'in_production')
+            ->where('status', SaleStatus::InProduction)
             ->with(['product', 'customer'])
             ->get();
 
@@ -32,44 +32,33 @@ class ProductionController extends Controller
 
     public function updateItems(UpdateProductionItemsRequest $request, ProductionLine $productionLine): JsonResponse
     {
-        try {
-            $this->productionService->updateItemsStatus(
-                $request->sale_ids,
-                $productionLine->id,
-                $request->status
-            );
-            return response()->json(['message' => 'Items updated']);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
+        $this->productionService->updateItemsStatus(
+            $request->sale_ids,
+            $productionLine->id,
+            $request->status
+        );
+
+        return response()->json(['message' => 'Items updated']);
     }
 
     public function start(ProductionLine $productionLine): JsonResponse
     {
-        try {
-            $count = $this->productionService->startProduction($productionLine->id);
+        $count = $this->productionService->startProduction($productionLine->id);
 
-            return response()->json([
-                'message' => 'Production started',
-                'count' => $count
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
+        return response()->json([
+            'message' => 'Production started',
+            'count' => $count,
+        ]);
     }
 
     public function processItem(Sale $sale): JsonResponse
     {
-        try {
-            $result = $this->productionService->processItem($sale);
+        $result = $this->productionService->processItem($sale);
 
-            return response()->json([
-                'message' => 'Item processed and delivered',
-                'sale' => new SaleResource($result['sale']), // Standardize response
-                'remaining_count' => $result['remaining_count']
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
+        return response()->json([
+            'message' => 'Item processed and delivered',
+            'sale' => new SaleResource($result['sale']),
+            'remaining_count' => $result['remaining_count'],
+        ]);
     }
 }

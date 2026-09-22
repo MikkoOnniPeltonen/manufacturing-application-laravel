@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\SaleStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Sale extends Model
@@ -13,6 +15,7 @@ class Sale extends Model
     use HasFactory, SoftDeletes;
 
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -22,6 +25,7 @@ class Sale extends Model
         'quantity',
         'date_to_deliver',
         'status',
+        'priority',
         'delivered_at',
     ];
 
@@ -29,6 +33,7 @@ class Sale extends Model
         'date_to_deliver' => 'date',
         'delivered_at' => 'datetime',
         'quantity' => 'integer',
+        'status' => SaleStatus::class,
     ];
 
     protected static function boot()
@@ -54,7 +59,7 @@ class Sale extends Model
         return $this->belongsTo(ProductionLine::class);
     }
 
-    public function productionLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function productionLogs(): HasMany
     {
         return $this->hasMany(ProductionLog::class);
     }
