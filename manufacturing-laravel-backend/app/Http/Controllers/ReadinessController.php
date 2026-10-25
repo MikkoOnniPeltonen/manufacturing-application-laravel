@@ -38,7 +38,9 @@ class ReadinessController extends Controller
     private function check(callable $check): array
     {
         try {
-            $check();
+            if ($check() === false) {
+                return ['status' => 'down'];
+            }
 
             return ['status' => 'up'];
         } catch (Throwable) {

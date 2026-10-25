@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\SaleStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\IndexCollectionRequest;
 use App\Http\Requests\UpdateProductionItemsRequest;
 use App\Http\Resources\SaleResource;
 use App\Models\ProductionLine;
 use App\Models\Sale;
 use App\Services\ProductionService;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 
 class ProductionController extends Controller
@@ -20,14 +22,14 @@ class ProductionController extends Controller
         $this->productionService = $productionService;
     }
 
-    public function getItems(ProductionLine $productionLine): JsonResponse
+    #[Response(type: 'array{data: SaleResource[], current_page: int, per_page: int, total: int, last_page: int, from: int|null, to: int|null}')]
+    public function getItems(IndexCollectionRequest $request, ProductionLine $productionLine): JsonResponse
     {
         $items = Sale::where('production_line_id', $productionLine->id)
             ->where('status', SaleStatus::InProduction)
-            ->with(['product', 'customer'])
-            ->get();
+            ->with(['product', 'customer'])->orderBy('priority')->orderBy('id');
 
-        return response()->json(SaleResource::collection($items));
+        return $this->paginatedResourceResponse($request, $items, SaleResource::class);
     }
 
     public function updateItems(UpdateProductionItemsRequest $request, ProductionLine $productionLine): JsonResponse

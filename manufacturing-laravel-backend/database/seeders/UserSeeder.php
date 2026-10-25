@@ -9,6 +9,10 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        if (! app()->environment(['local', 'testing']) || ! config('app.demo_mode')) {
+            return;
+        }
+
         // Create Manager user
         $manager = User::create([
             'name' => 'Manager User',

@@ -1,0 +1,5 @@
+# Install under the application service user. All Laravel schedules use UTC.
+* * * * * cd /var/www/manufacturing/manufacturing-laravel-backend && php artisan schedule:run >> /var/log/manufacturing-scheduler.log 2>&1
+# Run backup verification with maintenance credentials that can create a scratch database.
+# Use the application's environment plus restricted PG credentials in the job runner.
+0 2 * * * cd /var/www/manufacturing/manufacturing-laravel-backend && php artisan ops:backup --verify >> /var/log/manufacturing-backup.log 2>&1

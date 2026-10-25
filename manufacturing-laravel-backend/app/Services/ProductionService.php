@@ -9,6 +9,7 @@ use App\Models\ProductionLog;
 use App\Models\Sale;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ProductionService
 {
@@ -18,20 +19,17 @@ class ProductionService
     public function startProduction(int $productionLineId): int
     {
         return DB::transaction(function () use ($productionLineId) {
+            ProductionLine::lockForUpdate()->findOrFail($productionLineId);
             $pendingSales = Sale::where('production_line_id', $productionLineId)
                 ->where('status', SaleStatus::Pending)
+                ->orderBy('id')
                 ->lockForUpdate() // Prevent race conditions
                 ->get();
 
             $count = 0;
             foreach ($pendingSales as $sale) {
-                $oldStatus = $sale->status;
-                $object = $sale->update(['status' => SaleStatus::InProduction]);
-
-                if ($object) {
-                    $this->logStatusChange($sale->id, $oldStatus->value, SaleStatus::InProduction->value);
-                    $count++;
-                }
+                $this->transition($sale, SaleStatus::InProduction);
+                $count++;
             }
 
             return $count;
@@ -44,23 +42,22 @@ class ProductionService
     public function updateItemsStatus(array $saleIds, int $productionLineId, string $status): void
     {
         DB::transaction(function () use ($saleIds, $productionLineId, $status) {
+            ProductionLine::lockForUpdate()->findOrFail($productionLineId);
             $sales = Sale::whereIn('id', $saleIds)
                 ->where('production_line_id', $productionLineId)
+                ->orderBy('id')
                 ->lockForUpdate()
-                ->get();
+                ->get()->keyBy('id');
 
-            foreach ($sales as $sale) {
-                $oldStatus = $sale->status;
-                $targetStatus = SaleStatus::from($status);
-
-                if ($oldStatus !== $targetStatus) {
-                    if (! $oldStatus->canTransitionTo($targetStatus)) {
-                        throw new ProductionException('The sale cannot transition to the requested status.');
-                    }
-
-                    $sale->update(['status' => $targetStatus]);
-                    $this->logStatusChange($sale->id, $oldStatus->value, $targetStatus->value);
+            if ($sales->count() !== count(array_unique($saleIds))) {
+                throw ValidationException::withMessages(['sale_ids' => 'Every sale must exist on the requested production line.']);
+            }
+            foreach ($saleIds as $index => $id) {
+                $sale = $sales[$id];
+                if ($sale->status === SaleStatus::Pending && $status === SaleStatus::InProduction->value) {
+                    $sale->priority = $index + 1;
                 }
+                $this->transition($sale, SaleStatus::from($status));
             }
         });
     }
@@ -72,7 +69,8 @@ class ProductionService
     public function processItem(Sale $sale): array
     {
         return DB::transaction(function () use ($sale) {
-            // Lock the current row so concurrent workers cannot process it twice.
+            // All mutations lock the line before its sales to serialize line aggregates.
+            ProductionLine::lockForUpdate()->findOrFail($sale->production_line_id);
             $sale = Sale::query()
                 ->whereKey($sale->getKey())
                 ->lockForUpdate()
@@ -82,19 +80,7 @@ class ProductionService
                 throw new ProductionException('Sale is not in production.');
             }
 
-            $oldStatus = $sale->status;
-
-            // Update Sale
-            $sale->update([
-                'status' => SaleStatus::Delivered,
-                'delivered_at' => Carbon::now(),
-            ]);
-
-            // Log change
-            $this->logStatusChange($sale->id, $oldStatus->value, SaleStatus::Delivered->value);
-
-            // Note: DeliveredOrder creation is REMOVED as per Phase 2 plan.
-            // Note: has_sales flag on ProductionLine is updated via Observer.
+            $this->transition($sale, SaleStatus::Delivered);
 
             // Metrics for return value
             $activeSalesCount = Sale::where('production_line_id', $sale->production_line_id)
@@ -106,6 +92,25 @@ class ProductionService
                 'remaining_count' => $activeSalesCount,
             ];
         });
+    }
+
+    private function transition(Sale $sale, SaleStatus $target): void
+    {
+        if ($target === SaleStatus::Cancelled) {
+            throw new ProductionException('Use the order cancellation workflow with a reason.');
+        }
+        $previous = $sale->status;
+        if ($previous === $target) {
+            return;
+        }
+        if (! $previous->canTransitionTo($target)) {
+            throw new ProductionException('The sale cannot transition to the requested status.');
+        }
+        $sale->update([
+            'status' => $target,
+            'delivered_at' => $target === SaleStatus::Delivered ? Carbon::now() : null,
+        ]);
+        $this->logStatusChange($sale->id, $previous->value, $target->value);
     }
 
     /**

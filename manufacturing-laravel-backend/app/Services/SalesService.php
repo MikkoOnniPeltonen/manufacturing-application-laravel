@@ -4,11 +4,11 @@ namespace App\Services;
 
 use App\Enums\SaleStatus;
 use App\Models\Customer;
-use App\Models\Product;
 use App\Models\ProductionLine;
 use App\Models\Sale;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class SalesService
 {
@@ -18,11 +18,11 @@ class SalesService
     public function generateRandomSales(int $productionLineId, int $count): array
     {
         return DB::transaction(function () use ($productionLineId, $count) {
-            $productionLine = ProductionLine::with('products')->findOrFail($productionLineId);
+            $productionLine = ProductionLine::with('products')->lockForUpdate()->findOrFail($productionLineId);
             $lineProductIds = $productionLine->products->pluck('id');
 
             if ($lineProductIds->isEmpty()) {
-                throw new \Exception('No products in this production line');
+                throw ValidationException::withMessages(['production_line_id' => 'No products in this production line.']);
             }
 
             // Fetch customers who have preferences for products in this production line
@@ -35,15 +35,13 @@ class SalesService
             ])->get();
 
             if ($customers->isEmpty()) {
-                throw new \Exception('No eligible customers found.');
+                throw ValidationException::withMessages(['production_line_id' => 'No eligible customers found.']);
             }
 
             $sales = [];
             for ($i = 0; $i < $count; $i++) {
                 $customer = $customers->random();
-                $product = Product::query()
-                    ->whereKey($customer->selectedProducts()->pluck('products.id')->random())
-                    ->firstOrFail();
+                $product = $customer->selectedProducts->random();
 
                 $sale = Sale::create([
                     'product_id' => $product->id,
@@ -67,9 +65,11 @@ class SalesService
     public function clearPendingSales(int $productionLineId): void
     {
         DB::transaction(function () use ($productionLineId) {
-            Sale::where('production_line_id', $productionLineId)
-                ->where('status', SaleStatus::Pending)
-                ->delete();
+            $line = ProductionLine::lockForUpdate()->findOrFail($productionLineId);
+            foreach (Sale::where('production_line_id', $productionLineId)->where('status', SaleStatus::Pending)->orderBy('id')->lockForUpdate()->get() as $sale) {
+                $sale->delete();
+            }
+            $line->update(['has_sales' => $line->sales()->whereIn('status', [SaleStatus::Pending, SaleStatus::InProduction])->exists()]);
         });
     }
 
@@ -79,14 +79,21 @@ class SalesService
     public function updatePriorities(array $saleIds): void
     {
         DB::transaction(function () use ($saleIds) {
+            $lineIds = Sale::whereIn('id', $saleIds)->distinct()->pluck('production_line_id');
+            if ($lineIds->count() !== 1) {
+                throw ValidationException::withMessages(['sale_ids' => 'Sales must belong to one production line.']);
+            }
+            ProductionLine::lockForUpdate()->findOrFail($lineIds->first());
             $sales = Sale::query()
                 ->whereIn('id', $saleIds)
+                ->where('status', SaleStatus::Pending)
+                ->orderBy('id')
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
 
             if ($sales->count() !== count(array_unique($saleIds))) {
-                throw new \InvalidArgumentException('One or more sales could not be found.');
+                throw ValidationException::withMessages(['sale_ids' => 'One or more pending sales could not be found.']);
             }
 
             foreach ($saleIds as $index => $id) {

@@ -9,5 +9,8 @@
     "api:export": "pnpm --dir manufacturing-laravel-backend exec -- php artisan scramble:export --path=../docs/api/openapi.json --silent",
     "api:types": "pnpm --filter manufacturing-frontend exec openapi-typescript ../docs/api/openapi.json -o src/api/generated.ts",
     "api:generate": "pnpm run api:export && pnpm run api:types"
+  },
+  "engines": {
+    "node": "^24.22.1"
   }
 }

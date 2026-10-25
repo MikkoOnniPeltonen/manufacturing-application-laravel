@@ -14,7 +14,7 @@ class GenerateSalesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'production_line_id' => 'required|exists:production_lines,id',
+            'production_line_id' => 'required|exists:production_lines,id,deleted_at,NULL',
             'count' => 'integer|min:1|max:20',
         ];
     }

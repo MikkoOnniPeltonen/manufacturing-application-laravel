@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +23,7 @@ class AuthController extends Controller
         $user = Auth::user();
 
         return response()->json([
-            'user' => $user->load('roles'),
+            'user' => new UserResource($user->load('roles')),
         ]);
     }
 
@@ -37,6 +38,6 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json($request->user()->load('roles'));
+        return response()->json(new UserResource($request->user()->load('roles')));
     }
 }

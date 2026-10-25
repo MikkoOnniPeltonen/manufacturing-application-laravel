@@ -20,7 +20,7 @@ class Product extends Model
 
     public function productionLine(): BelongsTo
     {
-        return $this->belongsTo(ProductionLine::class);
+        return $this->belongsTo(ProductionLine::class)->withTrashed();
     }
 
     public function customers(): BelongsToMany

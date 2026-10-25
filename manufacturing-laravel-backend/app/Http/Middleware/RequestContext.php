@@ -12,7 +12,8 @@ class RequestContext
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $requestId = $request->header('X-Request-ID') ?: (string) Str::uuid();
+        $providedId = $request->header('X-Request-ID', '');
+        $requestId = preg_match('/\A[a-zA-Z0-9._-]{1,100}\z/', $providedId) ? $providedId : (string) Str::uuid();
 
         $request->attributes->set('request_id', $requestId);
         Log::withContext([

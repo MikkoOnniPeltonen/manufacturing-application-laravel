@@ -1,5 +1,5 @@
 {
-    "openapi": "3.1.0",
+    "openapi": "3.1.2",
     "info": {
         "title": "Manufacturing Management API",
         "version": "0.0.1",
@@ -32,6 +32,237 @@
                                 }
                             }
                         }
+                    },
+                    "409": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                "Demo reset could not complete. Check active production runs."
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/audit-events": {
+            "get": {
+                "operationId": "audit.index",
+                "tags": [
+                    "Audit"
+                ],
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/SaleStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "production_line_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "customer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "id",
+                                "name",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "asc",
+                                "desc",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "subject_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 64
+                        }
+                    },
+                    {
+                        "name": "subject_type",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "sale",
+                                "production_run",
+                                "system",
+                                null
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AuditEventResource"
+                                            }
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "from": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "to": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "current_page",
+                                        "last_page",
+                                        "per_page",
+                                        "total",
+                                        "from",
+                                        "to"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -61,7 +292,7 @@
                                     "type": "object",
                                     "properties": {
                                         "user": {
-                                            "type": "string"
+                                            "$ref": "#/components/schemas/UserResource"
                                         }
                                     },
                                     "required": [
@@ -136,11 +367,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`UserResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/User"
+                                    "$ref": "#/components/schemas/UserResource"
                                 }
                             }
                         }
@@ -158,6 +389,81 @@
                     "Customer"
                 ],
                 "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/SaleStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "production_line_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "customer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "id",
+                                "name",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "asc",
+                                "desc",
+                                null
+                            ]
+                        }
+                    },
                     {
                         "name": "page",
                         "in": "query",
@@ -200,65 +506,47 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "string"
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CustomerResource"
+                                            }
                                         },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "data": {
-                                                    "type": "string"
-                                                },
-                                                "current_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "per_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "total": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "last_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "from": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "to": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null",
-                                                        "string"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "data",
-                                                "current_page",
-                                                "per_page",
-                                                "total",
-                                                "last_page",
-                                                "from",
-                                                "to"
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "from": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "to": {
+                                            "type": [
+                                                "integer",
+                                                "null"
                                             ]
                                         }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "current_page",
+                                        "per_page",
+                                        "total",
+                                        "last_page",
+                                        "from",
+                                        "to"
                                     ]
                                 }
                             }
@@ -348,8 +636,7 @@
                                             "type": "object",
                                             "required": [
                                                 "selected_products",
-                                                "sales",
-                                                "delivered"
+                                                "sales_summary"
                                             ]
                                         }
                                     ]
@@ -714,30 +1001,80 @@
                     }
                 ],
                 "responses": {
-                    "400": {
+                    "200": {
                         "description": "",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "message": {
+                                        "sales": {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/SaleResource"
+                                                    }
+                                                },
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "data",
+                                                "current_page",
+                                                "per_page",
+                                                "total",
+                                                "last_page"
+                                            ]
+                                        },
+                                        "pending": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SaleResource"
+                                            }
+                                        },
+                                        "in_production": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SaleResource"
+                                            }
+                                        },
+                                        "timestamp": {
                                             "type": "string"
+                                        },
+                                        "start_date": {
+                                            "type": "string"
+                                        },
+                                        "end_date": {
+                                            "type": "string"
+                                        },
+                                        "mode": {
+                                            "type": "string"
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
                                         }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "string"
+                                    }
                                 }
                             }
                         }
@@ -754,13 +1091,200 @@
                 }
             }
         },
-        "/v1/products": {
-            "get": {
-                "operationId": "products.index",
+        "/v1/client-errors": {
+            "post": {
+                "operationId": "operations.clientError",
                 "tags": [
-                    "Product"
+                    "Operations"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "category": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Error",
+                                            "TypeError",
+                                            "RangeError",
+                                            "ReferenceError",
+                                            "SyntaxError",
+                                            "URIError",
+                                            "EvalError"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "category"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error recorded"
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/operations": {
+            "get": {
+                "operationId": "operations.show",
+                "tags": [
+                    "Operations"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "checks": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "ok": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "ok",
+                                                    "message"
+                                                ]
+                                            }
+                                        },
+                                        "alerts_configured": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "checks",
+                                        "alerts_configured"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/orders": {
+            "get": {
+                "operationId": "order.index",
+                "tags": [
+                    "Order"
                 ],
                 "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/SaleStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "production_line_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "customer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "id",
+                                "name",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "asc",
+                                "desc",
+                                null
+                            ]
+                        }
+                    },
                     {
                         "name": "page",
                         "in": "query",
@@ -803,65 +1327,453 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "anyOf": [
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SaleResource"
+                                            }
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "from": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "to": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "current_page",
+                                        "last_page",
+                                        "per_page",
+                                        "total",
+                                        "from",
+                                        "to"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "order.store",
+                "tags": [
+                    "Order"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreOrderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`SaleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
                                         {
-                                            "type": "string"
+                                            "$ref": "#/components/schemas/SaleResource"
                                         },
                                         {
                                             "type": "object",
-                                            "properties": {
-                                                "data": {
-                                                    "type": "string"
-                                                },
-                                                "current_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "per_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "total": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "last_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "from": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "to": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null",
-                                                        "string"
-                                                    ]
-                                                }
-                                            },
                                             "required": [
-                                                "data",
-                                                "current_page",
-                                                "per_page",
-                                                "total",
-                                                "last_page",
-                                                "from",
-                                                "to"
+                                                "product",
+                                                "customer",
+                                                "production_line"
                                             ]
                                         }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/orders/{sale}": {
+            "get": {
+                "operationId": "order.show",
+                "tags": [
+                    "Order"
+                ],
+                "parameters": [
+                    {
+                        "name": "sale",
+                        "in": "path",
+                        "required": true,
+                        "description": "The sale ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SaleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SaleResource"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "required": [
+                                                "product",
+                                                "customer",
+                                                "production_line"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "order.update",
+                "tags": [
+                    "Order"
+                ],
+                "parameters": [
+                    {
+                        "name": "sale",
+                        "in": "path",
+                        "required": true,
+                        "description": "The sale ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateOrderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`SaleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SaleResource"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "required": [
+                                                "product",
+                                                "customer",
+                                                "production_line"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/orders/{sale}/cancel": {
+            "post": {
+                "operationId": "order.cancel",
+                "tags": [
+                    "Order"
+                ],
+                "parameters": [
+                    {
+                        "name": "sale",
+                        "in": "path",
+                        "required": true,
+                        "description": "The sale ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 500
+                                    }
+                                },
+                                "required": [
+                                    "reason"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`SaleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SaleResource"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "required": [
+                                                "product",
+                                                "customer",
+                                                "production_line"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/products": {
+            "get": {
+                "operationId": "products.index",
+                "tags": [
+                    "Product"
+                ],
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/SaleStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "production_line_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "customer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "id",
+                                "name",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "asc",
+                                "desc",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProductResource"
+                                            }
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "from": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "to": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "current_page",
+                                        "per_page",
+                                        "total",
+                                        "last_page",
+                                        "from",
+                                        "to"
                                     ]
                                 }
                             }
@@ -1101,29 +2013,166 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/SaleStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "production_line_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "customer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "id",
+                                "name",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "asc",
+                                "desc",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Array of `SaleResource`",
+                        "description": "",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "allOf": [
-                                            {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
                                                 "$ref": "#/components/schemas/SaleResource"
-                                            },
-                                            {
-                                                "type": "object",
-                                                "required": [
-                                                    "product",
-                                                    "customer"
-                                                ]
                                             }
-                                        ]
-                                    }
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "from": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "to": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "current_page",
+                                        "per_page",
+                                        "total",
+                                        "last_page",
+                                        "from",
+                                        "to"
+                                    ]
                                 }
                             }
                         }
@@ -1133,6 +2182,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             },
@@ -1309,6 +2361,81 @@
                 ],
                 "parameters": [
                     {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/SaleStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "production_line_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "customer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "id",
+                                "name",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "asc",
+                                "desc",
+                                null
+                            ]
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "schema": {
@@ -1350,65 +2477,47 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "string"
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProductionLineResource"
+                                            }
                                         },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "data": {
-                                                    "type": "string"
-                                                },
-                                                "current_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "per_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "total": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "last_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "from": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "to": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null",
-                                                        "string"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "data",
-                                                "current_page",
-                                                "per_page",
-                                                "total",
-                                                "last_page",
-                                                "from",
-                                                "to"
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "from": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "to": {
+                                            "type": [
+                                                "integer",
+                                                "null"
                                             ]
                                         }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "current_page",
+                                        "per_page",
+                                        "total",
+                                        "last_page",
+                                        "from",
+                                        "to"
                                     ]
                                 }
                             }
@@ -1441,9 +2550,6 @@
                                     "capacity": {
                                         "type": "integer",
                                         "minimum": 1
-                                    },
-                                    "has_sales": {
-                                        "type": "boolean"
                                     },
                                     "product_logo_url": {
                                         "type": [
@@ -1547,9 +2653,6 @@
                                         "type": "integer",
                                         "minimum": 1
                                     },
-                                    "has_sales": {
-                                        "type": "boolean"
-                                    },
                                     "product_logo_url": {
                                         "type": [
                                             "string",
@@ -1613,13 +2716,88 @@
                 }
             }
         },
-        "/v1/sales": {
+        "/v1/production-runs": {
             "get": {
-                "operationId": "sales.index",
+                "operationId": "productionRun.index",
                 "tags": [
-                    "Sales"
+                    "ProductionRun"
                 ],
                 "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/SaleStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "production_line_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "customer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "id",
+                                "name",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "asc",
+                                "desc",
+                                null
+                            ]
+                        }
+                    },
                     {
                         "name": "page",
                         "in": "query",
@@ -1662,65 +2840,306 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "string"
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProductionRunResource"
+                                            }
                                         },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "data": {
-                                                    "type": "string"
-                                                },
-                                                "current_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "per_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "total": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "last_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "from": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "to": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null",
-                                                        "string"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "data",
-                                                "current_page",
-                                                "per_page",
-                                                "total",
-                                                "last_page",
-                                                "from",
-                                                "to"
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "from": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "to": {
+                                            "type": [
+                                                "integer",
+                                                "null"
                                             ]
                                         }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "current_page",
+                                        "last_page",
+                                        "per_page",
+                                        "total",
+                                        "from",
+                                        "to"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "productionRun.store",
+                "tags": [
+                    "ProductionRun"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "production_line_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "production_line_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`ProductionRunResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductionRunResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/production-runs/{productionRun}/retry": {
+            "post": {
+                "operationId": "productionRun.retry",
+                "tags": [
+                    "ProductionRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "productionRun",
+                        "in": "path",
+                        "required": true,
+                        "description": "The production run ID",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "`ProductionRunResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductionRunResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/sales": {
+            "get": {
+                "operationId": "sales.index",
+                "tags": [
+                    "Sales"
+                ],
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/SaleStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "production_line_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "customer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "id",
+                                "name",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "asc",
+                                "desc",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SaleResource"
+                                            }
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "from": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "to": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "current_page",
+                                        "per_page",
+                                        "total",
+                                        "last_page",
+                                        "from",
+                                        "to"
                                     ]
                                 }
                             }
@@ -1752,6 +3171,81 @@
                         }
                     },
                     {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/SaleStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "production_line_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "customer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "id",
+                                "name",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "asc",
+                                "desc",
+                                null
+                            ]
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "schema": {
@@ -1793,65 +3287,47 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "string"
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SaleResource"
+                                            }
                                         },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "data": {
-                                                    "type": "string"
-                                                },
-                                                "current_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "per_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "total": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "last_page": {
-                                                    "type": [
-                                                        "integer",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "from": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null",
-                                                        "string"
-                                                    ]
-                                                },
-                                                "to": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null",
-                                                        "string"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "data",
-                                                "current_page",
-                                                "per_page",
-                                                "total",
-                                                "last_page",
-                                                "from",
-                                                "to"
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "from": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "to": {
+                                            "type": [
+                                                "integer",
+                                                "null"
                                             ]
                                         }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "current_page",
+                                        "per_page",
+                                        "total",
+                                        "last_page",
+                                        "from",
+                                        "to"
                                     ]
                                 }
                             }
@@ -2008,6 +3484,54 @@
     },
     "components": {
         "schemas": {
+            "AuditEventResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "actor_id": {
+                        "type": "string"
+                    },
+                    "actor_name": {
+                        "type": "string"
+                    },
+                    "subject_type": {
+                        "type": "string"
+                    },
+                    "subject_id": {
+                        "type": "string"
+                    },
+                    "action": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "before": {
+                        "type": "string"
+                    },
+                    "after": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "actor_id",
+                    "actor_name",
+                    "subject_type",
+                    "subject_id",
+                    "action",
+                    "reason",
+                    "before",
+                    "after",
+                    "created_at"
+                ],
+                "title": "AuditEventResource"
+            },
             "CustomerResource": {
                 "type": "object",
                 "properties": {
@@ -2041,36 +3565,10 @@
                             "$ref": "#/components/schemas/ProductResource"
                         }
                     },
-                    "sales": {
+                    "sales_summary": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/Sale"
-                        }
-                    },
-                    "delivered": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "id": {
-                                    "type": "string"
-                                },
-                                "productionLineId": {
-                                    "type": "integer"
-                                },
-                                "customerId": {
-                                    "type": "integer"
-                                },
-                                "quantity": {
-                                    "type": "integer"
-                                }
-                            },
-                            "required": [
-                                "id",
-                                "productionLineId",
-                                "customerId",
-                                "quantity"
-                            ]
+                            "$ref": "#/components/schemas/CustomerSalesSummaryResource"
                         }
                     },
                     "created_at": {
@@ -2090,6 +3588,26 @@
                     "updated_at"
                 ],
                 "title": "CustomerResource"
+            },
+            "CustomerSalesSummaryResource": {
+                "type": "object",
+                "properties": {
+                    "production_line_id": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "production_line_id",
+                    "status",
+                    "quantity"
+                ],
+                "title": "CustomerSalesSummaryResource"
             },
             "GenerateSalesRequest": {
                 "type": "object",
@@ -2173,6 +3691,15 @@
                     "name": {
                         "type": "string"
                     },
+                    "pending_sales_count": {
+                        "type": "integer"
+                    },
+                    "in_production_sales_count": {
+                        "type": "integer"
+                    },
+                    "delivered_sales_count": {
+                        "type": "integer"
+                    },
                     "capacity": {
                         "type": "integer"
                     },
@@ -2204,78 +3731,55 @@
                 ],
                 "title": "ProductionLineResource"
             },
-            "Sale": {
+            "ProductionRunResource": {
                 "type": "object",
                 "properties": {
                     "id": {
                         "type": "string"
                     },
-                    "product_id": {
-                        "type": "integer"
-                    },
-                    "customer_id": {
-                        "type": "integer"
-                    },
                     "production_line_id": {
-                        "type": "integer"
-                    },
-                    "quantity": {
-                        "type": "integer"
-                    },
-                    "date_to_deliver": {
-                        "type": "string",
-                        "format": "date-time"
+                        "type": "string"
                     },
                     "status": {
-                        "$ref": "#/components/schemas/SaleStatus"
+                        "type": "string"
+                    },
+                    "total_count": {
+                        "type": "string"
+                    },
+                    "processed_count": {
+                        "type": "string"
+                    },
+                    "last_error": {
+                        "type": "string"
                     },
                     "created_at": {
+                        "type": "string"
+                    },
+                    "started_at": {
                         "type": [
                             "string",
                             "null"
-                        ],
-                        "format": "date-time"
+                        ]
                     },
-                    "updated_at": {
+                    "finished_at": {
                         "type": [
                             "string",
                             "null"
-                        ],
-                        "format": "date-time"
-                    },
-                    "deleted_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time"
-                    },
-                    "delivered_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time"
-                    },
-                    "priority": {
-                        "type": "integer"
+                        ]
                     }
                 },
                 "required": [
                     "id",
-                    "product_id",
-                    "customer_id",
                     "production_line_id",
-                    "quantity",
-                    "date_to_deliver",
                     "status",
+                    "total_count",
+                    "processed_count",
+                    "last_error",
                     "created_at",
-                    "updated_at",
-                    "deleted_at",
-                    "delivered_at",
-                    "priority"
+                    "started_at",
+                    "finished_at"
                 ],
-                "title": "Sale"
+                "title": "ProductionRunResource"
             },
             "SaleResource": {
                 "type": "object",
@@ -2301,6 +3805,9 @@
                     "production_line": {
                         "$ref": "#/components/schemas/ProductionLineResource"
                     },
+                    "priority": {
+                        "type": "integer"
+                    },
                     "quantity": {
                         "type": "integer"
                     },
@@ -2309,6 +3816,12 @@
                     },
                     "date_to_deliver": {
                         "type": "string"
+                    },
+                    "cancelled_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "delivered_at": {
                         "type": [
@@ -2328,9 +3841,11 @@
                     "product_id",
                     "customer_id",
                     "production_line_id",
+                    "priority",
                     "quantity",
                     "status",
                     "date_to_deliver",
+                    "cancelled_at",
                     "delivered_at",
                     "created_at",
                     "updated_at"
@@ -2342,7 +3857,8 @@
                 "enum": [
                     "pending",
                     "in_production",
-                    "delivered"
+                    "delivered",
+                    "cancelled"
                 ],
                 "title": "SaleStatus"
             },
@@ -2371,19 +3887,80 @@
                         "type": [
                             "string",
                             "null"
-                        ]
+                        ],
+                        "maxLength": 2048
                     },
                     "selected_product_ids": {
                         "type": "array",
                         "items": {
                             "type": "integer"
-                        }
+                        },
+                        "maxItems": 100,
+                        "uniqueItems": true
                     }
                 },
                 "required": [
                     "name"
                 ],
                 "title": "StoreCustomerRequest"
+            },
+            "StoreOrderRequest": {
+                "type": "object",
+                "properties": {
+                    "customer_id": {
+                        "type": "integer"
+                    },
+                    "product_id": {
+                        "type": "integer"
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000
+                    },
+                    "date_to_deliver": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "customer_id",
+                    "product_id",
+                    "quantity",
+                    "date_to_deliver",
+                    "reason"
+                ],
+                "title": "StoreOrderRequest"
+            },
+            "UpdateOrderRequest": {
+                "type": "object",
+                "properties": {
+                    "quantity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000
+                    },
+                    "date_to_deliver": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "quantity",
+                    "date_to_deliver",
+                    "reason"
+                ],
+                "title": "UpdateOrderRequest"
             },
             "UpdateProductionItemsRequest": {
                 "type": "object",
@@ -2394,10 +3971,17 @@
                             "type": "string",
                             "format": "uuid"
                         },
-                        "minItems": 1
+                        "minItems": 1,
+                        "maxItems": 100,
+                        "uniqueItems": true
                     },
                     "status": {
-                        "$ref": "#/components/schemas/SaleStatus"
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "in_production",
+                            "delivered"
+                        ]
                     }
                 },
                 "required": [
@@ -2415,7 +3999,9 @@
                             "type": "string",
                             "format": "uuid"
                         },
-                        "minItems": 1
+                        "minItems": 1,
+                        "maxItems": 100,
+                        "uniqueItems": true
                     }
                 },
                 "required": [
@@ -2423,7 +4009,7 @@
                 ],
                 "title": "UpdateSalesPriorityRequest"
             },
-            "User": {
+            "UserResource": {
                 "type": "object",
                 "properties": {
                     "id": {
@@ -2435,37 +4021,28 @@
                     "email": {
                         "type": "string"
                     },
-                    "email_verified_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time"
-                    },
-                    "created_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time"
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "name"
+                            ]
+                        }
                     }
                 },
                 "required": [
                     "id",
                     "name",
                     "email",
-                    "email_verified_at",
-                    "created_at",
-                    "updated_at"
+                    "roles"
                 ],
-                "title": "User"
+                "title": "UserResource"
             }
         },
         "responses": {

@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ProductionRun;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class ResetDemoData extends Command
 {
@@ -29,15 +29,25 @@ class ResetDemoData extends Command
     {
         $this->info('Resetting demo data...');
 
-        Schema::disableForeignKeyConstraints();
+        if (! app()->environment(['local', 'testing']) || ! config('app.demo_mode')) {
+            $this->error('Demo reset is disabled in this environment.');
 
-        DB::table('production_logs')->truncate();
-        DB::table('sales')->truncate();
-        DB::table('customer_product')->truncate();
+            return self::FAILURE;
+        }
 
-        DB::table('production_lines')->update(['has_sales' => false]);
+        if (ProductionRun::whereIn('status', ['queued', 'running'])->exists()) {
+            $this->error('Finish active production runs before resetting demo data.');
 
-        Schema::enableForeignKeyConstraints();
+            return self::FAILURE;
+        }
+        DB::transaction(function () {
+            DB::table('production_run_items')->delete();
+            DB::table('production_runs')->delete();
+            DB::table('production_logs')->delete();
+            DB::table('sales')->delete();
+            DB::table('customer_product')->delete();
+            DB::table('production_lines')->update(['has_sales' => false]);
+        });
 
         $this->info('Demo data reset successfully!');
     }

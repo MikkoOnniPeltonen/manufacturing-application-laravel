@@ -63,7 +63,7 @@ production-oriented verification.
 
 - PHP 8.5+
 - Composer 2+
-- Node.js 22+
+- Node.js 24.22.1+ within the 24 LTS line (`nvm install` uses `.nvmrc`)
 - pnpm 12+
 - Docker Desktop (recommended for PostgreSQL and Valkey)
 
@@ -130,8 +130,10 @@ Seeded local/testing environments include:
 | Admin | `admin@manufacturing.com` | `SecurePass2026!` |
 
 These credentials are for local demonstration only and must not be used in a
-deployed environment. The demo reset endpoint is restricted to local/testing
-environments.
+deployed environment. Demo data requires `DEMO_MODE=true` and a local/testing environment. The demo reset
+endpoint additionally requires an authenticated administrator; the CLI command has
+the same environment guard. Production seeding initializes roles and permissions
+without creating demo accounts.
 
 ## API contract workflow
 
@@ -163,6 +165,8 @@ composer audit
 cd ..
 
 pnpm lint:frontend
+pnpm --filter manufacturing-frontend typecheck
+pnpm audit
 pnpm build:frontend
 pnpm api:generate
 ```
@@ -215,3 +219,94 @@ is available; native Laravel Redis workers are used in the meantime.
 ## License
 
 This project is released under the MIT License.
+
+## API changes and verification (October 2026)
+
+Collection endpoints now return a pagination envelope by default (`data`,
+`current_page`, `last_page`, `per_page`, `total`, `from`, `to`). The default page
+size is 25 and the maximum is 100. Clients must follow pagination rather than
+assuming all records arrive in one response. History search uses the same
+envelope inside `sales`; timestamp snapshots return paginated `pending` and
+`in_production` arrays with top-level pagination metadata. Dates default to the
+last 30 days for history search, including when only one date bound is supplied.
+
+Customer responses expose grouped `sales_summary` rather than complete sale
+histories. Retrieve individual orders using `/api/v1/sales?customer_id=...` with
+pagination. Production-line lists include aggregate counts for the dashboard.
+Production batches accept up to 100 distinct sale IDs and reject the whole batch
+when any sale is missing or belongs to another line. Staging order is persisted.
+
+The TypeScript check now includes all frontend source files in strict mode.
+Screens, contexts and shared UI components are TypeScript/TSX, and API calls are
+checked against the generated contract. Browser tests cover the real cookie
+login/logout flow, admin production access, manager restrictions, and history
+search:
+
+```bash
+pnpm --filter manufacturing-frontend exec playwright install chromium
+pnpm --filter manufacturing-frontend test:e2e
+```
+
+Use a **dedicated, disposable database** containing demo fixtures for browser
+checks. Migrate and seed it with `APP_ENV=local DEMO_MODE=true` before starting the
+suite. Playwright starts its own API and frontend servers on ports 8000 and 5173.
+Do not run it against a shared database. PostgreSQL concurrency tests run as part
+of `composer test` when `DB_CONNECTION=pgsql`; SQLite runs skip those PostgreSQL-only tests.
+All backend tests migrate their configured database, so always use a test database.
+CI verifies both the PostgreSQL concurrency tests and the browser workflows.
+
+## Dependency maintenance and deployment
+
+The verified update retains PHP 8.5 and Laravel 13, updates Composer packages
+within their existing compatible ranges, and moves both Vite toolchains to Vite
+8 with matching plugins. JavaScript dependencies are refreshed within their
+compatible ranges. Tailwind 3's selector parser is overridden to a patched 7.x
+release; the CSS production build is verified with that override.
+
+Tailwind 4, React Table 9, Recharts 3, Biome 2, and PHPUnit 13 involve separate
+major-version migrations and are deferred. Recharts 2 is marked deprecated by
+its publisher; plan its replacement alongside the chart wrapper migration.
+PostgreSQL remains on 17 and Valkey on 8 in Compose/CI; database major upgrades
+need a separate data migration. Dependabot proposes weekly dependency and GitHub
+Actions updates. CI audits both Composer and the pnpm workspace.
+
+For production, set `APP_ENV=production`, `APP_DEBUG=false`, `DEMO_MODE=false`,
+`SESSION_SECURE_COOKIE=true`, and the exact `FRONTEND_URL` and
+`SANCTUM_STATEFUL_DOMAINS`. Serve both applications over HTTPS. If the API and SPA
+use different subdomains, configure a shared `SESSION_DOMAIN` so the SPA can read
+the XSRF cookie. Keep database and cache ports private; development Compose now
+binds them to loopback only. Demo accounts from an earlier deployment are not
+removed automatically: remove or rotate those credentials if they were seeded.
+
+After pulling these changes, run `composer install`, `pnpm install --frozen-lockfile`,
+and `php artisan migrate` from the backend directory for the new history and
+customer-summary indexes. Refresh cached configuration and restart supervised
+workers as part of your normal deployment.
+
+Version references: [Laravel support](https://laravel.com/docs/13.x/releases),
+[Vite 8 migration](https://vite.dev/guide/migration),
+[Node security releases](https://github.com/nodejs/node/releases),
+[PostgreSQL support](https://www.postgresql.org/support/versioning/), and
+[Valkey maintained releases](https://valkey.io/download/).
+The repository pins Node 24.22.1 because that release includes security fixes;
+updating the project does not replace a developer's installed Node runtime.
+
+## Business workflows and operations
+
+Administrators can create, edit and cancel real orders at `/orders`, with a
+required reason and an audit trail at `/admin/audit`. Only pending orders can be
+edited or cancelled. Managers stage orders and start persistent background
+production runs; workers continue independently of browser tabs. Failed runs can
+be retried. The administrator operations screen is `/admin/operations`.
+
+Run `composer queue:work` and `composer schedule:work` alongside the API. The
+scheduler records heartbeats and repairs queued runs after dispatch outages.
+For a production release use the [deployment runbook](deploy/README.md), worker
+and cron examples, `php artisan ops:check --deployment`, and PostgreSQL
+`ops:backup --verify` / `ops:verify-backup` commands. External error delivery is
+optional until configured with `ERROR_WEBHOOK_URL`; normal Laravel logs remain.
+
+[Workflow architecture](docs/architecture/workflows.md) explains transactions,
+lock ordering, response codes, audit scope, idempotency, retries and recovery.
+A hosted preview still needs a chosen host, public domain and its own disposable
+database. The repository name can be changed independently of these features.

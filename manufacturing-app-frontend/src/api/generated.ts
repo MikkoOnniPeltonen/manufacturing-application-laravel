@@ -33,8 +33,40 @@ export interface paths {
                         };
                     };
                 };
+                401: components["responses"]["AuthenticationException"];
+                /** @description An error */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /**
+                             * @description Error overview.
+                             * @example Demo reset could not complete. Check active production runs.
+                             */
+                            message: string;
+                        };
+                    };
+                };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/audit-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["audit.index"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -153,6 +185,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/client-errors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["operations.clientError"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["operations.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["order.index"];
+        put?: never;
+        post: operations["order.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{sale}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["order.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["order.update"];
+        trace?: never;
+    };
+    "/v1/orders/{sale}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["order.cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/products": {
         parameters: {
             query?: never;
@@ -265,6 +377,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/production-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["productionRun.index"];
+        put?: never;
+        post: operations["productionRun.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/production-runs/{productionRun}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["productionRun.retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/sales": {
         parameters: {
             query?: never;
@@ -349,6 +493,19 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AuditEventResource */
+        AuditEventResource: {
+            id: string;
+            actor_id: string;
+            actor_name: string;
+            subject_type: string;
+            subject_id: string;
+            action: string;
+            reason: string;
+            before: string;
+            after: string;
+            created_at: string;
+        };
         /** CustomerResource */
         CustomerResource: {
             id: number;
@@ -357,15 +514,15 @@ export interface components {
             address: string | null;
             customer_logo_url: string | null;
             selected_products?: components["schemas"]["ProductResource"][];
-            sales?: components["schemas"]["Sale"][];
-            delivered?: {
-                id: string;
-                productionLineId: number;
-                customerId: number;
-                quantity: number;
-            }[];
+            sales_summary?: components["schemas"]["CustomerSalesSummaryResource"][];
             created_at: string;
             updated_at: string;
+        };
+        /** CustomerSalesSummaryResource */
+        CustomerSalesSummaryResource: {
+            production_line_id: number;
+            status: string;
+            quantity: number;
         };
         /** GenerateSalesRequest */
         GenerateSalesRequest: {
@@ -392,6 +549,9 @@ export interface components {
         ProductionLineResource: {
             id: number;
             name: string;
+            pending_sales_count?: number;
+            in_production_sales_count?: number;
+            delivered_sales_count?: number;
             capacity: number;
             has_sales: boolean;
             /** @description Ensure boolean */
@@ -399,25 +559,17 @@ export interface components {
             created_at: string;
             updated_at: string;
         };
-        /** Sale */
-        Sale: {
+        /** ProductionRunResource */
+        ProductionRunResource: {
             id: string;
-            product_id: number;
-            customer_id: number;
-            production_line_id: number;
-            quantity: number;
-            /** Format: date-time */
-            date_to_deliver: string;
-            status: components["schemas"]["SaleStatus"];
-            /** Format: date-time */
-            created_at: string | null;
-            /** Format: date-time */
-            updated_at: string | null;
-            /** Format: date-time */
-            deleted_at: string | null;
-            /** Format: date-time */
-            delivered_at: string | null;
-            priority: number;
+            production_line_id: string;
+            status: string;
+            total_count: string;
+            processed_count: string;
+            last_error: string;
+            created_at: string;
+            started_at: string | null;
+            finished_at: string | null;
         };
         /** SaleResource */
         SaleResource: {
@@ -428,9 +580,11 @@ export interface components {
             customer?: components["schemas"]["CustomerResource"];
             production_line_id: number;
             production_line?: components["schemas"]["ProductionLineResource"];
+            priority: number;
             quantity: number;
             status: string;
             date_to_deliver: string;
+            cancelled_at: string | null;
             delivered_at: string | null;
             created_at: string;
             updated_at: string;
@@ -439,7 +593,7 @@ export interface components {
          * SaleStatus
          * @enum {string}
          */
-        SaleStatus: "pending" | "in_production" | "delivered";
+        SaleStatus: "pending" | "in_production" | "delivered" | "cancelled";
         /** StoreCustomerRequest */
         StoreCustomerRequest: {
             name: string;
@@ -448,26 +602,40 @@ export interface components {
             customer_logo_url?: string | null;
             selected_product_ids?: number[];
         };
+        /** StoreOrderRequest */
+        StoreOrderRequest: {
+            customer_id: number;
+            product_id: number;
+            quantity: number;
+            /** Format: date */
+            date_to_deliver: string;
+            reason: string;
+        };
+        /** UpdateOrderRequest */
+        UpdateOrderRequest: {
+            quantity: number;
+            /** Format: date */
+            date_to_deliver: string;
+            reason: string;
+        };
         /** UpdateProductionItemsRequest */
         UpdateProductionItemsRequest: {
             sale_ids: string[];
-            status: components["schemas"]["SaleStatus"];
+            /** @enum {string} */
+            status: "pending" | "in_production" | "delivered";
         };
         /** UpdateSalesPriorityRequest */
         UpdateSalesPriorityRequest: {
             sale_ids: string[];
         };
-        /** User */
-        User: {
+        /** UserResource */
+        UserResource: {
             id: number;
             name: string;
             email: string;
-            /** Format: date-time */
-            email_verified_at: string | null;
-            /** Format: date-time */
-            created_at: string | null;
-            /** Format: date-time */
-            updated_at: string | null;
+            roles: {
+                name: string;
+            }[];
         };
     };
     responses: {
@@ -531,6 +699,47 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    "audit.index": {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["SaleStatus"] | null;
+                production_line_id?: number | null;
+                customer_id?: number | null;
+                search?: string | null;
+                sort?: "id" | "name" | null;
+                direction?: "asc" | "desc" | null;
+                page?: number | null;
+                limit?: number | null;
+                per_page?: number | null;
+                subject_id?: string | null;
+                subject_type?: "sale" | "production_run" | "system" | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AuditEventResource"][];
+                        current_page: number;
+                        last_page: number;
+                        per_page: number;
+                        total: number;
+                        from: number | null;
+                        to: number | null;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "auth.login": {
         parameters: {
             query?: never;
@@ -550,7 +759,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        user: string;
+                        user: components["schemas"]["UserResource"];
                     };
                 };
             };
@@ -600,12 +809,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description `UserResource` */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["User"];
+                    "application/json": components["schemas"]["UserResource"];
                 };
             };
             401: components["responses"]["AuthenticationException"];
@@ -614,6 +824,12 @@ export interface operations {
     "customers.index": {
         parameters: {
             query?: {
+                status?: components["schemas"]["SaleStatus"] | null;
+                production_line_id?: number | null;
+                customer_id?: number | null;
+                search?: string | null;
+                sort?: "id" | "name" | null;
+                direction?: "asc" | "desc" | null;
                 page?: number | null;
                 limit?: number | null;
                 per_page?: number | null;
@@ -629,14 +845,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string | {
-                        data: string;
-                        current_page: number | string;
-                        per_page: number | string;
-                        total: number | string;
-                        last_page: number | string;
-                        from: number | null | string;
-                        to: number | null | string;
+                    "application/json": {
+                        data: components["schemas"]["CustomerResource"][];
+                        current_page: number;
+                        per_page: number;
+                        total: number;
+                        last_page: number;
+                        from: number | null;
+                        to: number | null;
                     };
                 };
             };
@@ -832,16 +1048,24 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
-                };
-            };
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
                     "application/json": {
-                        message: string;
+                        sales?: {
+                            data: components["schemas"]["SaleResource"][];
+                            current_page: number;
+                            per_page: number;
+                            total: number;
+                            last_page: number;
+                        };
+                        pending?: components["schemas"]["SaleResource"][];
+                        in_production?: components["schemas"]["SaleResource"][];
+                        timestamp?: string;
+                        start_date?: string;
+                        end_date?: string;
+                        mode?: string;
+                        current_page?: number;
+                        last_page?: number;
+                        total?: number;
+                        per_page?: number;
                     };
                 };
             };
@@ -850,9 +1074,74 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
-    "products.index": {
+    "operations.clientError": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    category: "Error" | "TypeError" | "RangeError" | "ReferenceError" | "SyntaxError" | "URIError" | "EvalError";
+                };
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "Error recorded";
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "operations.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        checks: {
+                            [key: string]: {
+                                ok: boolean;
+                                message: string;
+                            };
+                        };
+                        alerts_configured: boolean;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "order.index": {
         parameters: {
             query?: {
+                status?: components["schemas"]["SaleStatus"] | null;
+                production_line_id?: number | null;
+                customer_id?: number | null;
+                search?: string | null;
+                sort?: "id" | "name" | null;
+                direction?: "asc" | "desc" | null;
                 page?: number | null;
                 limit?: number | null;
                 per_page?: number | null;
@@ -868,14 +1157,166 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string | {
-                        data: string;
-                        current_page: number | string;
-                        per_page: number | string;
-                        total: number | string;
-                        last_page: number | string;
-                        from: number | null | string;
-                        to: number | null | string;
+                    "application/json": {
+                        data: components["schemas"]["SaleResource"][];
+                        current_page: number;
+                        last_page: number;
+                        per_page: number;
+                        total: number;
+                        from: number | null;
+                        to: number | null;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "order.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description `SaleResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SaleResource"] & Record<string, never>;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "order.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sale ID */
+                sale: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `SaleResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SaleResource"] & Record<string, never>;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "order.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sale ID */
+                sale: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description `SaleResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SaleResource"] & Record<string, never>;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "order.cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sale ID */
+                sale: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description `SaleResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SaleResource"] & Record<string, never>;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "products.index": {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["SaleStatus"] | null;
+                production_line_id?: number | null;
+                customer_id?: number | null;
+                search?: string | null;
+                sort?: "id" | "name" | null;
+                direction?: "asc" | "desc" | null;
+                page?: number | null;
+                limit?: number | null;
+                per_page?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ProductResource"][];
+                        current_page: number;
+                        per_page: number;
+                        total: number;
+                        last_page: number;
+                        from: number | null;
+                        to: number | null;
                     };
                 };
             };
@@ -997,7 +1438,17 @@ export interface operations {
     };
     "production.getItems": {
         parameters: {
-            query?: never;
+            query?: {
+                status?: components["schemas"]["SaleStatus"] | null;
+                production_line_id?: number | null;
+                customer_id?: number | null;
+                search?: string | null;
+                sort?: "id" | "name" | null;
+                direction?: "asc" | "desc" | null;
+                page?: number | null;
+                limit?: number | null;
+                per_page?: number | null;
+            };
             header?: never;
             path: {
                 /** @description The production line ID */
@@ -1007,17 +1458,25 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Array of `SaleResource` */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": (components["schemas"]["SaleResource"] & Record<string, never>)[];
+                    "application/json": {
+                        data: components["schemas"]["SaleResource"][];
+                        current_page: number;
+                        per_page: number;
+                        total: number;
+                        last_page: number;
+                        from: number | null;
+                        to: number | null;
+                    };
                 };
             };
             401: components["responses"]["AuthenticationException"];
             404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "production.updateItems": {
@@ -1113,6 +1572,12 @@ export interface operations {
     "production-lines.index": {
         parameters: {
             query?: {
+                status?: components["schemas"]["SaleStatus"] | null;
+                production_line_id?: number | null;
+                customer_id?: number | null;
+                search?: string | null;
+                sort?: "id" | "name" | null;
+                direction?: "asc" | "desc" | null;
                 page?: number | null;
                 limit?: number | null;
                 per_page?: number | null;
@@ -1128,14 +1593,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string | {
-                        data: string;
-                        current_page: number | string;
-                        per_page: number | string;
-                        total: number | string;
-                        last_page: number | string;
-                        from: number | null | string;
-                        to: number | null | string;
+                    "application/json": {
+                        data: components["schemas"]["ProductionLineResource"][];
+                        current_page: number;
+                        per_page: number;
+                        total: number;
+                        last_page: number;
+                        from: number | null;
+                        to: number | null;
                     };
                 };
             };
@@ -1155,7 +1620,6 @@ export interface operations {
                 "application/json": {
                     name: string;
                     capacity: number;
-                    has_sales?: boolean;
                     /** Format: uri */
                     product_logo_url?: string | null;
                 };
@@ -1215,7 +1679,6 @@ export interface operations {
                 "application/json": {
                     name?: string;
                     capacity?: number;
-                    has_sales?: boolean;
                     /** Format: uri */
                     product_logo_url?: string | null;
                 };
@@ -1259,9 +1722,15 @@ export interface operations {
             404: components["responses"]["ModelNotFoundException"];
         };
     };
-    "sales.index": {
+    "productionRun.index": {
         parameters: {
             query?: {
+                status?: components["schemas"]["SaleStatus"] | null;
+                production_line_id?: number | null;
+                customer_id?: number | null;
+                search?: string | null;
+                sort?: "id" | "name" | null;
+                direction?: "asc" | "desc" | null;
                 page?: number | null;
                 limit?: number | null;
                 per_page?: number | null;
@@ -1277,14 +1746,106 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string | {
-                        data: string;
-                        current_page: number | string;
-                        per_page: number | string;
-                        total: number | string;
-                        last_page: number | string;
-                        from: number | null | string;
-                        to: number | null | string;
+                    "application/json": {
+                        data: components["schemas"]["ProductionRunResource"][];
+                        current_page: number;
+                        last_page: number;
+                        per_page: number;
+                        total: number;
+                        from: number | null;
+                        to: number | null;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "productionRun.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    production_line_id: number;
+                };
+            };
+        };
+        responses: {
+            /** @description `ProductionRunResource` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductionRunResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "productionRun.retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The production run ID */
+                productionRun: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ProductionRunResource` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductionRunResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "sales.index": {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["SaleStatus"] | null;
+                production_line_id?: number | null;
+                customer_id?: number | null;
+                search?: string | null;
+                sort?: "id" | "name" | null;
+                direction?: "asc" | "desc" | null;
+                page?: number | null;
+                limit?: number | null;
+                per_page?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaleResource"][];
+                        current_page: number;
+                        per_page: number;
+                        total: number;
+                        last_page: number;
+                        from: number | null;
+                        to: number | null;
                     };
                 };
             };
@@ -1295,6 +1856,12 @@ export interface operations {
     "sales.byProductionLine": {
         parameters: {
             query?: {
+                status?: components["schemas"]["SaleStatus"] | null;
+                production_line_id?: number | null;
+                customer_id?: number | null;
+                search?: string | null;
+                sort?: "id" | "name" | null;
+                direction?: "asc" | "desc" | null;
                 page?: number | null;
                 limit?: number | null;
                 per_page?: number | null;
@@ -1313,14 +1880,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string | {
-                        data: string;
-                        current_page: number | string;
-                        per_page: number | string;
-                        total: number | string;
-                        last_page: number | string;
-                        from: number | null | string;
-                        to: number | null | string;
+                    "application/json": {
+                        data: components["schemas"]["SaleResource"][];
+                        current_page: number;
+                        per_page: number;
+                        total: number;
+                        last_page: number;
+                        from: number | null;
+                        to: number | null;
                     };
                 };
             };

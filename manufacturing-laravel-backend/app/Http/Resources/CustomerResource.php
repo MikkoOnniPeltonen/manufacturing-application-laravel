@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources;
 
-use App\Enums\SaleStatus;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin Customer */
 class CustomerResource extends JsonResource
 {
     /**
@@ -22,17 +23,7 @@ class CustomerResource extends JsonResource
             'address' => $this->address,
             'customer_logo_url' => $this->customer_logo_url,
             'selected_products' => ProductResource::collection($this->whenLoaded('selectedProducts')),
-            'sales' => $this->whenLoaded('sales'),
-            'delivered' => $this->whenLoaded('sales', function () {
-                return $this->sales->where('status', SaleStatus::Delivered)->map(function ($sale) {
-                    return [
-                        'id' => $sale->id,
-                        'productionLineId' => $sale->production_line_id,
-                        'customerId' => $sale->customer_id,
-                        'quantity' => $sale->quantity,
-                    ];
-                })->values();
-            }),
+            'sales_summary' => CustomerSalesSummaryResource::collection($this->whenLoaded('salesSummary')),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

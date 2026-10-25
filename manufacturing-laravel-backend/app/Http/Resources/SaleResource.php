@@ -2,9 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin Sale */
 class SaleResource extends JsonResource
 {
     /**
@@ -22,9 +24,11 @@ class SaleResource extends JsonResource
             'customer' => new CustomerResource($this->whenLoaded('customer')),
             'production_line_id' => $this->production_line_id,
             'production_line' => new ProductionLineResource($this->whenLoaded('productionLine')),
+            'priority' => (int) $this->priority,
             'quantity' => $this->quantity,
             'status' => $this->status?->value,
             'date_to_deliver' => $this->date_to_deliver->toIso8601String(),
+            'cancelled_at' => $this->cancelled_at?->toIso8601String(),
             'delivered_at' => $this->delivered_at ? $this->delivered_at->toIso8601String() : null,
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),

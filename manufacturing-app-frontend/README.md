@@ -1,8 +1,14 @@
-# React + Vite
+# Manufacturing frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React SPA with strict TypeScript checks for all source files and a generated
+OpenAPI client. Run `pnpm dev`, `pnpm typecheck`, `pnpm lint` and `pnpm build` here.
+Use the Node version in the repository's `.nvmrc`.
 
-Currently, two official plugins are available:
+Administrators manage `/orders`, `/customers`, `/admin/audit` and
+`/admin/operations`. Managers stage orders and start background production runs
+at `/manager-view`. Processing survives navigation and browser closure.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Run `pnpm test:e2e` against a disposable PostgreSQL database seeded with
+`BrowserTestSeeder`. Playwright starts the API, an actual database queue worker,
+and Vite on local ports. See the [project README](../README.md) and
+[deployment runbook](../deploy/README.md) for configuration and test isolation.

@@ -14,8 +14,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(RoleSeeder::class);
+        if (! app()->environment(['local', 'testing']) || ! config('app.demo_mode')) {
+            return;
+        }
         $this->call([
-            RoleSeeder::class,
             UserSeeder::class,
             ProductionLineSeeder::class,
             ProductSeeder::class,

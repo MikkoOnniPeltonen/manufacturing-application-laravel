@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Enums\SaleStatus;
 use App\Models\Sale;
+use App\Services\AuditService;
 use Illuminate\Support\Facades\DB;
 
 class SaleObserver
@@ -13,6 +14,7 @@ class SaleObserver
      */
     public function created(Sale $sale): void
     {
+        app(AuditService::class)->sale($sale, 'order.created');
         $this->updateProductionLineHasSales($sale->production_line_id);
     }
 
@@ -21,6 +23,7 @@ class SaleObserver
      */
     public function updated(Sale $sale): void
     {
+        app(AuditService::class)->sale($sale, 'order.updated');
         $this->updateProductionLineHasSales($sale->production_line_id);
     }
 
@@ -29,6 +32,7 @@ class SaleObserver
      */
     public function deleted(Sale $sale): void
     {
+        app(AuditService::class)->sale($sale, 'order.deleted');
         $this->updateProductionLineHasSales($sale->production_line_id);
     }
 
@@ -37,6 +41,7 @@ class SaleObserver
      */
     public function restored(Sale $sale): void
     {
+        app(AuditService::class)->sale($sale, 'order.restored');
         $this->updateProductionLineHasSales($sale->production_line_id);
     }
 

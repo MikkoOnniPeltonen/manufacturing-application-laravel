@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property-read int $pending_sales_count
+ * @property-read int $in_production_sales_count
+ * @property-read int $delivered_sales_count
+ */
 class ProductionLine extends Model
 {
     use HasFactory, SoftDeletes;

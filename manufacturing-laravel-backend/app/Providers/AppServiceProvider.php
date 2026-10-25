@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Sale;
 use App\Observers\SaleObserver;
+use App\Services\AuditService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -15,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->scoped(AuditService::class);
     }
 
     /**
@@ -26,7 +27,10 @@ class AppServiceProvider extends ServiceProvider
         Sale::observe(SaleObserver::class);
 
         RateLimiter::for('login', function ($request) {
-            return Limit::perMinute(5)->by(strtolower((string) $request->input('email')).'|'.$request->ip());
+            return [
+                Limit::perMinute(30)->by('ip:'.$request->ip()),
+                Limit::perMinute(5)->by('account:'.strtolower((string) $request->input('email')).'|'.$request->ip()),
+            ];
         });
 
         RateLimiter::for('demo-reset', function ($request) {

@@ -6,14 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\IndexCollectionRequest;
 use App\Http\Resources\ProductionLineResource;
 use App\Models\ProductionLine;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProductionLineController extends Controller
 {
+    #[Response(type: 'array{data: ProductionLineResource[], current_page: int, per_page: int, total: int, last_page: int, from: int|null, to: int|null}')]
     public function index(IndexCollectionRequest $request): JsonResponse
     {
-        $productionLines = ProductionLine::with('products');
+        $productionLines = ProductionLine::query()->withCount([
+            'sales as pending_sales_count' => fn ($q) => $q->where('status', 'pending'),
+            'sales as in_production_sales_count' => fn ($q) => $q->where('status', 'in_production'),
+            'sales as delivered_sales_count' => fn ($q) => $q->where('status', 'delivered'),
+        ]);
 
         return $this->paginatedResourceResponse($request, $productionLines, ProductionLineResource::class, 25, 100);
     }
@@ -23,7 +30,6 @@ class ProductionLineController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'capacity' => 'required|integer|min:1',
-            'has_sales' => 'boolean',
             'product_logo_url' => 'nullable|url',
         ]);
 
@@ -42,7 +48,6 @@ class ProductionLineController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'capacity' => 'sometimes|integer|min:1',
-            'has_sales' => 'boolean',
             'product_logo_url' => 'nullable|url',
         ]);
 
@@ -53,7 +58,11 @@ class ProductionLineController extends Controller
 
     public function destroy(ProductionLine $productionLine): JsonResponse
     {
-        $productionLine->delete();
+        DB::transaction(function () use ($productionLine) {
+            $line = ProductionLine::lockForUpdate()->findOrFail($productionLine->id);
+            abort_if($line->products()->exists() || $line->sales()->exists(), 409, 'Remove products and resolve sales before deleting this production line.');
+            $line->delete();
+        });
 
         return response()->json(null, 204);
     }

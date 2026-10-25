@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\SaleStatus;
 use App\Http\Resources\SaleResource;
-use App\Models\ProductionLog;
 use App\Models\Sale;
 use Carbon\Carbon;
 
@@ -13,63 +12,44 @@ class HistoryService
     /**
      * Reconstruct the state of a production line at a specific timestamp.
      */
-    public function getProductionLineState(int $productionLineId, string $timestamp): array
+    public function getProductionLineState(int $productionLineId, string $timestamp, int $limit = 25, int $page = 1): array
     {
         $targetTime = Carbon::parse($timestamp);
+        $sales = Sale::withTrashed()
+            ->where('production_line_id', $productionLineId)
+            ->where('created_at', '<=', $targetTime)
+            ->where(fn ($q) => $q->whereNull('deleted_at')->orWhere('deleted_at', '>', $targetTime))
+            ->whereDoesntHave('productionLogs', fn ($q) => $q->whereIn('to_status', [SaleStatus::Delivered->value, SaleStatus::Cancelled->value])->where('created_at', '<=', $targetTime))
+            ->with(['product', 'customer', 'productionLine', 'auditEvents' => fn ($q) => $q->where('created_at', '<=', $targetTime)->orderByDesc('id')->limit(1), 'productionLogs' => fn ($q) => $q
+                ->where('created_at', '<=', $targetTime)->orderByDesc('created_at')->orderByDesc('id')->limit(1)])
+            ->orderBy('created_at')->orderBy('id')
+            ->paginate(min(max($limit, 1), 100), ['*'], 'page', max($page, 1));
 
-        // Fetch all sales ever associated with this line
-        $allSales = Sale::where('production_line_id', $productionLineId)
-            ->with(['product', 'customer', 'productionLine'])
-            ->withTrashed() // Include deleted items if any, though we soft delete
-            ->get();
-
-        $pending = collect([]);
-        $inProduction = collect([]);
-
-        foreach ($allSales as $sale) {
-            // If sale was created AFTER the target time, it didn't exist yet.
-            if ($sale->created_at->gt($targetTime)) {
-                continue;
+        foreach ($sales as $sale) {
+            $snapshot = $sale->auditEvents->first();
+            if ($snapshot && $snapshot->after) {
+                $sale->fill(array_intersect_key($snapshot->after, array_flip(['quantity', 'date_to_deliver', 'priority'])));
             }
-
-            // Find the last log entry BEFORE or AT target time
-            $lastLog = ProductionLog::where('sale_id', $sale->id)
-                ->where('created_at', '<=', $targetTime)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            $statusAtTime = SaleStatus::Pending; // Default initial status
-
-            if ($lastLog) {
-                $statusAtTime = SaleStatus::from($lastLog->to_status);
-            } else {
-                // No logs yet at that time.
-                // If the item was created before target time, it was pending.
-                // (Already checked created_at above)
-            }
-
-            // Manually set the status on the model instance for the resource to use
-            $sale->status = $statusAtTime;
-
-            if ($statusAtTime === SaleStatus::Pending) {
-                $pending->push($sale);
-            } elseif ($statusAtTime === SaleStatus::InProduction) {
-                $inProduction->push($sale);
-            }
-            // 'delivered' items are ignored as per requirement (or we could return them if needed)
+            $sale->status = SaleStatus::from($sale->productionLogs->first()->to_status ?? SaleStatus::Pending->value);
+            // Current delivery metadata must not leak into an earlier snapshot.
+            $sale->delivered_at = null;
         }
 
         return [
-            'pending' => SaleResource::collection($pending),
-            'in_production' => SaleResource::collection($inProduction),
+            'pending' => SaleResource::collection($sales->getCollection()->where('status', SaleStatus::Pending)->values()),
+            'in_production' => SaleResource::collection($sales->getCollection()->where('status', SaleStatus::InProduction)->values()),
             'timestamp' => $targetTime->toIso8601String(),
+            'current_page' => $sales->currentPage(),
+            'last_page' => $sales->lastPage(),
+            'total' => $sales->total(),
+            'per_page' => $sales->perPage(),
         ];
     }
 
     /**
      * Get all sales that were active (created or moved) within a specific time range.
      */
-    public function getSalesActivity(int $productionLineId, ?string $startDate, ?string $endDate, array $filters = [], ?int $limit = null, ?int $page = 1): array
+    public function getSalesActivity(int $productionLineId, ?string $startDate, ?string $endDate, array $filters = [], ?int $limit = 25, ?int $page = 1): array
     {
         $start = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
         $end = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now()->endOfDay();
@@ -78,19 +58,12 @@ class HistoryService
             ->with([
                 'product',
                 'customer',
-                'productionLogs' => function ($q) use ($start, $end) {
-                    // Eager load logs only within range if we have one, otherwise just latest
-                    if ($start && $end) {
-                        $q->whereBetween('created_at', [$start, $end]);
-                    }
-                    $q->orderBy('created_at', 'desc');
-                },
             ])
             ->withTrashed()
-            ->orderBy('created_at', 'desc');
+            ->orderBy('created_at', 'desc')->orderBy('id', 'desc');
 
         // Date Range Logic
-        if ($startDate && $endDate) {
+        if ($start && $end) {
             $query->where(function ($q) use ($start, $end) {
                 $q->whereBetween('created_at', [$start, $end])
                     ->orWhereHas('productionLogs', function ($subQ) use ($start, $end) {
@@ -116,29 +89,24 @@ class HistoryService
             $query->where('status', $filters['status']);
         }
 
-        if (! empty($filters['min_quantity'])) {
+        if (isset($filters['min_quantity'])) {
             $query->where('quantity', '>=', $filters['min_quantity']);
         }
 
-        if (! empty($filters['max_quantity'])) {
+        if (isset($filters['max_quantity'])) {
             $query->where('quantity', '<=', $filters['max_quantity']);
         }
 
-        if ($limit !== null) {
-            $sales = $query->paginate(min(max((int) $limit, 1), 100), ['*'], 'page', max((int) $page, 1));
-            $salesPayload = [
-                'data' => SaleResource::collection($sales->items())->resolve(),
-                'current_page' => $sales->currentPage(),
-                'per_page' => $sales->perPage(),
-                'total' => $sales->total(),
-                'last_page' => $sales->lastPage(),
-                'from' => $sales->firstItem(),
-                'to' => $sales->lastItem(),
-            ];
-        } else {
-            $sales = $query->get();
-            $salesPayload = SaleResource::collection($sales);
-        }
+        $sales = $query->paginate(min(max((int) ($limit ?? 25), 1), 100), ['*'], 'page', max((int) $page, 1));
+        $salesPayload = [
+            'data' => SaleResource::collection($sales->items())->resolve(),
+            'current_page' => $sales->currentPage(),
+            'per_page' => $sales->perPage(),
+            'total' => $sales->total(),
+            'last_page' => $sales->lastPage(),
+            'from' => $sales->firstItem(),
+            'to' => $sales->lastItem(),
+        ];
 
         return [
             'sales' => $salesPayload,

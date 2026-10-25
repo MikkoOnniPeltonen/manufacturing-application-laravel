@@ -26,14 +26,14 @@ class RoleSeeder extends Seeder
 
         // Create all permissions first
         foreach ($allPermissions as $permissionName) {
-            Permission::create(['name' => $permissionName, 'guard_name' => 'web']);
+            Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']);
         }
 
         // Force refresh the cache after creating permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create Manager role with production permissions
-        $manager = Role::create(['name' => 'manager', 'guard_name' => 'web']);
+        $manager = Role::firstOrCreate(['name' => 'manager', 'guard_name' => 'web']);
         $manager->givePermissionTo([
             'view-production-lines',
             'manage-production-lines',
@@ -42,7 +42,7 @@ class RoleSeeder extends Seeder
         ]);
 
         // Create Admin role with all permissions
-        $admin = Role::create(['name' => 'admin', 'guard_name' => 'web']);
+        $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $admin->givePermissionTo($allPermissions);
     }
 }

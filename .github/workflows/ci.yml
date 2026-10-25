@@ -75,11 +75,14 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Audit JavaScript dependencies
+        run: pnpm audit --audit-level=low
 
       - name: Prepare application
         working-directory: manufacturing-laravel-backend
@@ -87,6 +90,11 @@ jobs:
           cp .env.example .env
           php artisan key:generate --force
           php artisan migrate --force
+
+      - name: Install PostgreSQL backup utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
 
       - name: Run Composer tests
         working-directory: manufacturing-laravel-backend
@@ -108,5 +116,30 @@ jobs:
       - name: Lint frontend
         run: pnpm run lint:frontend
 
+      - name: Check complete frontend with strict TypeScript
+        run: pnpm --filter manufacturing-frontend typecheck
+
       - name: Build frontend
         run: pnpm run build:frontend
+
+      - name: Install browser for integration tests
+        run: pnpm --filter manufacturing-frontend exec playwright install --with-deps chromium
+
+      - name: Seed isolated CI database for browser tests
+        working-directory: manufacturing-laravel-backend
+        run: |
+          php artisan migrate --force
+          php artisan db:seed --class=BrowserTestSeeder --force
+        env:
+          DEMO_MODE: 'true'
+
+      - name: Run browser integration tests
+        run: pnpm --filter manufacturing-frontend test:e2e
+
+      - name: Upload browser failure traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failure-traces
+          path: manufacturing-app-frontend/test-results
+          if-no-files-found: ignore

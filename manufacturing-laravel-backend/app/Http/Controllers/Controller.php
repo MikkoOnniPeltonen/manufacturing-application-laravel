@@ -9,15 +9,15 @@ abstract class Controller
 {
     protected function paginateCollection(Request $request, $query, int $defaultLimit = 25, int $maxLimit = 100)
     {
-        if (! $request->hasAny(['limit', 'per_page', 'page'])) {
-            return $query->get();
-        }
-
         $limit = (int) ($request->input('limit', $request->input('per_page', $defaultLimit)));
         $page = max(1, (int) $request->input('page', 1));
 
         if ($limit < 1) {
             $limit = $defaultLimit;
+        }
+
+        if (empty($query->getQuery()->orders)) {
+            $query->orderBy($query->getModel()->getQualifiedKeyName());
         }
 
         return $query->paginate(min($limit, $maxLimit), ['*'], 'page', $page);

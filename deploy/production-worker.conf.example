@@ -1,0 +1,13 @@
+[program:manufacturing-worker]
+process_name=%(program_name)s_%(process_num)02d
+directory=/var/www/manufacturing/manufacturing-laravel-backend
+command=php artisan queue:work redis --sleep=1 --tries=3 --timeout=60 --max-time=3600
+user=www-data
+numprocs=2
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+stopwaitsecs=90
+redirect_stderr=true
+stdout_logfile=/var/log/manufacturing-worker.log

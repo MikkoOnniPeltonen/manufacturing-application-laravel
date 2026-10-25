@@ -14,8 +14,8 @@ class UpdateSalesPriorityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'sale_ids' => 'required|array',
-            'sale_ids.*' => 'uuid|exists:sales,id',
+            'sale_ids' => 'required|array|min:1|max:100',
+            'sale_ids.*' => 'distinct|uuid|exists:sales,id',
         ];
     }
 }
