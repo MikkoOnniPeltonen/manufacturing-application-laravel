@@ -11,7 +11,7 @@ production-oriented verification.
 
 - PHP 8.5
 - Laravel 13
-- PostgreSQL 17
+- PostgreSQL 18
 - Valkey 8 / Redis-compatible cache, sessions, and queues
 - Laravel Sanctum HttpOnly cookie sessions
 - Spatie Laravel Permission 8 for RBAC
@@ -83,6 +83,10 @@ docker compose up -d
 ```
 
 This starts PostgreSQL on `localhost:5432` and Valkey on `localhost:6379`.
+
+Existing PostgreSQL 17 users must follow the [database upgrade runbook](deploy/README.md#upgrading-postgresql-17-to-18)
+before starting the new service. PostgreSQL 18 uses a separate volume and a new
+mount location; existing data is retained in the old volume and requires migration.
 
 ### 3. Configure Laravel
 
@@ -266,8 +270,9 @@ release; the CSS production build is verified with that override.
 Tailwind 4, React Table 9, Recharts 3, Biome 2, and PHPUnit 13 involve separate
 major-version migrations and are deferred. Recharts 2 is marked deprecated by
 its publisher; plan its replacement alongside the chart wrapper migration.
-PostgreSQL remains on 17 and Valkey on 8 in Compose/CI; database major upgrades
-need a separate data migration. Dependabot proposes weekly dependency and GitHub
+PostgreSQL 18 and Valkey 8 are used in Compose/CI, with PostgreSQL 18 client tools
+for backup and restore tests. Existing PostgreSQL 17 data needs the documented
+dump/restore migration. Dependabot proposes weekly dependency and GitHub
 Actions updates. CI audits both Composer and the pnpm workspace.
 
 For production, set `APP_ENV=production`, `APP_DEBUG=false`, `DEMO_MODE=false`,

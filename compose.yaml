@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: manufacturing
       POSTGRES_USER: manufacturing
@@ -8,7 +8,7 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
-      - manufacturing-postgres:/var/lib/postgresql/data
+      - manufacturing-postgres18:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U manufacturing -d manufacturing"]
       interval: 5s
@@ -28,5 +28,5 @@ services:
       retries: 10
 
 volumes:
-  manufacturing-postgres:
+  manufacturing-postgres18:
   manufacturing-redis:
