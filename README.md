@@ -1,6 +1,6 @@
 # Manufacturing Management System
 
-Portfolio-grade manufacturing workflow application built as a Laravel API and a
+Manufacturing workflow application built as a Laravel API and a
 separate React SPA. The project demonstrates a modular monolith, typed API
 contracts, transactional domain workflows, cookie-based authentication, and
 production-oriented verification.
