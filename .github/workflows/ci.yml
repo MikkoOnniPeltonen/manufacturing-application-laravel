@@ -120,6 +120,8 @@ jobs:
 
       - name: Check generated OpenAPI files
         run: |
+          # Integration tests roll back their migrations; Scramble needs the schema.
+          pnpm --dir manufacturing-laravel-backend exec -- php artisan migrate --force
           pnpm run api:generate
           git diff --exit-code -- docs/api/openapi.json manufacturing-app-frontend/src/api/generated.ts
 

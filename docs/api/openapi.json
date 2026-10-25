@@ -3488,10 +3488,13 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "actor_id": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "actor_name": {
                         "type": "string"
@@ -3509,10 +3512,18 @@
                         "type": "string"
                     },
                     "before": {
-                        "type": "string"
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {}
                     },
                     "after": {
-                        "type": "string"
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {}
                     },
                     "created_at": {
                         "type": "string"
@@ -3738,19 +3749,22 @@
                         "type": "string"
                     },
                     "production_line_id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "status": {
                         "type": "string"
                     },
                     "total_count": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "processed_count": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "last_error": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "created_at": {
                         "type": "string"

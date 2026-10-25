@@ -153,6 +153,9 @@ pnpm api:generate
 Contract generation uses a fixed testing environment, localhost URL and demo mode
 so the documented development endpoints are reproducible locally and in CI.
 These settings apply only to the export process.
+Scramble also inspects model columns: first run `php artisan migrate` in the
+backend against your local PostgreSQL 18 database. CI recreates that schema after
+the integration tests roll their migrations back.
 
 The CI workflow regenerates both files and fails if the working tree changes,
 preventing contract drift.

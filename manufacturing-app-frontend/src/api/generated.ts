@@ -495,15 +495,19 @@ export interface components {
     schemas: {
         /** AuditEventResource */
         AuditEventResource: {
-            id: string;
-            actor_id: string;
+            id: number;
+            actor_id: number | null;
             actor_name: string;
             subject_type: string;
             subject_id: string;
             action: string;
             reason: string;
-            before: string;
-            after: string;
+            before: {
+                [key: string]: unknown;
+            } | null;
+            after: {
+                [key: string]: unknown;
+            } | null;
             created_at: string;
         };
         /** CustomerResource */
@@ -562,11 +566,11 @@ export interface components {
         /** ProductionRunResource */
         ProductionRunResource: {
             id: string;
-            production_line_id: string;
+            production_line_id: number;
             status: string;
-            total_count: string;
-            processed_count: string;
-            last_error: string;
+            total_count: number;
+            processed_count: number;
+            last_error: string | null;
             created_at: string;
             started_at: string | null;
             finished_at: string | null;
