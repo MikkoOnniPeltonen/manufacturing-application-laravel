@@ -150,6 +150,10 @@ are generated for the React client.
 pnpm api:generate
 ```
 
+Contract generation uses a fixed testing environment, localhost URL and demo mode
+so the documented development endpoints are reproducible locally and in CI.
+These settings apply only to the export process.
+
 The CI workflow regenerates both files and fails if the working tree changes,
 preventing contract drift.
 
