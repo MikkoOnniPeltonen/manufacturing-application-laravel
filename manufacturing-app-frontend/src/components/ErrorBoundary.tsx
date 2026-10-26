@@ -22,7 +22,7 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, { 
   render() {
     if (this.state.failed)
       return (
-        <main role="alert" className="p-8 text-slate-100 bg-slate-900 min-h-screen">
+        <main role="alert" className="p-8 text-foreground bg-background min-h-screen">
           <h1>Something went wrong</h1>
           <p>
             Reload the page to recover. Your saved orders and background production runs remain on

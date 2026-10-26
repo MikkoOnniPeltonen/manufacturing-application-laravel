@@ -57,7 +57,7 @@ function AllCustomersPage() {
         accessorKey: 'id',
         header: () => <div className="w-[50px]">ID</div>,
         cell: info => (
-          <span className="font-mono text-slate-400 w-[50px] block">
+          <span className="font-mono text-muted-foreground w-[50px] block">
             #{String(info.getValue() ?? '')}
           </span>
         ),
@@ -68,7 +68,7 @@ function AllCustomersPage() {
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="text-slate-300 hover:text-white p-0 hover:bg-transparent font-semibold"
+            className="text-foreground hover:text-foreground p-0 hover:bg-transparent font-semibold"
           >
             Customer Name
             <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -76,7 +76,7 @@ function AllCustomersPage() {
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-3 min-w-[220px]">
-            <div className="h-9 w-9 rounded-full bg-slate-700 overflow-hidden border border-slate-600 flex-shrink-0">
+            <div className="h-9 w-9 rounded-full bg-secondary overflow-hidden border border-border flex-shrink-0">
               <img
                 src={row.original.customer_logo_url ?? undefined}
                 alt={String(row.getValue('name'))}
@@ -86,7 +86,7 @@ function AllCustomersPage() {
                 }}
               />
             </div>
-            <span className="font-medium text-slate-100 truncate">
+            <span className="font-medium text-foreground truncate">
               {String(row.getValue('name'))}
             </span>
           </div>
@@ -94,19 +94,19 @@ function AllCustomersPage() {
       },
       {
         accessorKey: 'contact',
-        header: () => <div className="text-center font-semibold text-slate-300">Contact Info</div>,
+        header: () => <div className="text-center font-semibold text-foreground">Contact Info</div>,
         cell: info => (
-          <div className="text-slate-400 font-medium text-center">
+          <div className="text-muted-foreground font-medium text-center">
             {String(info.getValue() ?? '')}
           </div>
         ),
       },
       {
         accessorKey: 'address',
-        header: () => <div className="text-center font-semibold text-slate-300">Address</div>,
+        header: () => <div className="text-center font-semibold text-foreground">Address</div>,
         cell: info => (
           <div
-            className="text-slate-400 truncate max-w-[350px] mx-auto text-center"
+            className="text-muted-foreground truncate max-w-[350px] mx-auto text-center"
             title={String(info.getValue() ?? '')}
           >
             {String(info.getValue() ?? '')}
@@ -122,7 +122,7 @@ function AllCustomersPage() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 h-8"
+                className="text-primary hover:text-primary hover:bg-accent/20 h-8"
               >
                 View
               </Button>
@@ -131,7 +131,7 @@ function AllCustomersPage() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-amber-400 hover:text-amber-300 hover:bg-amber-900/20 h-8"
+                className="text-warning hover:text-warning hover:bg-warning/10 h-8"
               >
                 Edit
               </Button>
@@ -165,68 +165,70 @@ function AllCustomersPage() {
   });
   if (customersError)
     return (
-      <p role="alert" className="p-6 text-red-400">
+      <p role="alert" className="p-6 text-destructive">
         Unable to load customers.
       </p>
     );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary/25" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 p-6">
+    <div className="workspace-page">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-6">
           <Link
             to="/"
-            className="flex items-center text-slate-400 hover:text-white transition-colors mb-4 w-fit"
+            className="flex items-center text-muted-foreground hover:text-foreground transition-colors mb-4 w-fit"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Link>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-white tracking-tight">Customer Database</h1>
-              <p className="text-slate-400">Manage customer records and view order history</p>
+              <h1 className="workspace-title">Customer Database</h1>
+              <p className="text-muted-foreground">
+                Manage customer records and view order history
+              </p>
             </div>
 
             <Link to="/customers/create">
-              <Button className="bg-blue-600 hover:bg-blue-500 text-white shadow-sm border-0">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm border-0">
                 <UserPlus className="mr-2 h-4 w-4" /> Add New Customer
               </Button>
             </Link>
           </div>
 
-          <Card className="bg-slate-800 border border-slate-700 shadow-sm">
-            <CardHeader className="p-6 border-b border-slate-700">
+          <Card className="bg-card border border-border shadow-sm">
+            <CardHeader className="p-6 border-b border-border">
               <div className="flex items-center space-x-2">
                 <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search customers..."
                     value={String(table.getColumn('name')?.getFilterValue() ?? '')}
                     onChange={event => table.getColumn('name')?.setFilterValue(event.target.value)}
-                    className="pl-9 bg-slate-900 border-slate-600 text-white placeholder:text-slate-500 focus:ring-blue-500 focus:border-blue-500"
+                    className="pl-9 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-ring focus:border-primary/25"
                   />
                 </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-slate-900/50">
+                <Table className="min-w-[760px]">
+                  <TableHeader className="bg-background/50">
                     {table.getHeaderGroups().map(headerGroup => (
-                      <TableRow
-                        key={headerGroup.id}
-                        className="border-slate-700 hover:bg-transparent"
-                      >
+                      <TableRow key={headerGroup.id} className="border-border hover:bg-transparent">
                         {headerGroup.headers.map(header => (
-                          <TableHead key={header.id} className="text-slate-400 font-semibold h-12">
+                          <TableHead
+                            key={header.id}
+                            className="text-muted-foreground font-semibold h-12"
+                          >
                             {header.isPlaceholder
                               ? null
                               : flexRender(header.column.columnDef.header, header.getContext())}
@@ -241,7 +243,7 @@ function AllCustomersPage() {
                         <TableRow
                           key={row.id}
                           data-state={row.getIsSelected() && 'selected'}
-                          className="border-slate-700 hover:bg-slate-700/50 transition-colors"
+                          className="border-border hover:bg-secondary/50 transition-colors"
                         >
                           {row.getVisibleCells().map(cell => (
                             <TableCell key={cell.id} className="py-4">
@@ -254,7 +256,7 @@ function AllCustomersPage() {
                       <TableRow>
                         <TableCell
                           colSpan={columns.length}
-                          className="h-24 text-center text-slate-500"
+                          className="h-24 text-center text-muted-foreground"
                         >
                           No results found.
                         </TableCell>
@@ -264,13 +266,13 @@ function AllCustomersPage() {
                 </Table>
               </div>
 
-              <div className="flex items-center justify-end space-x-2 p-4 border-t border-slate-700">
+              <div className="flex items-center justify-end space-x-2 p-4 border-t border-border">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white bg-transparent"
+                  className="border-border text-foreground hover:bg-secondary hover:text-foreground bg-transparent"
                 >
                   Previous
                 </Button>
@@ -279,7 +281,7 @@ function AllCustomersPage() {
                   size="sm"
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white bg-transparent"
+                  className="border-border text-foreground hover:bg-secondary hover:text-foreground bg-transparent"
                 >
                   Next
                 </Button>

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -63,11 +63,13 @@ function CreateCustomerPage() {
   const handleRetry = () => setErrorDialogOpen(false);
 
   return (
-    <div className="min-h-screen bg-slate-900 py-8 px-6">
+    <div className="workspace-page">
       <div className="max-w-2xl mx-auto">
-        <Card className="shadow-lg rounded-xl bg-slate-800 border-slate-700">
-          <CardHeader className="p-6 bg-slate-900/50 border-b border-slate-700">
-            <CardTitle className="text-2xl font-bold text-white">Create Customer</CardTitle>
+        <Card className="shadow-sm rounded-xl bg-card border-border">
+          <CardHeader className="p-6 bg-background/50 border-b border-border">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Create Customer
+            </h1>
           </CardHeader>
           <CardContent className="p-6">
             <CustomerForm
@@ -75,11 +77,11 @@ function CreateCustomerPage() {
               buttonText="Create Customer"
               existingCustomers={existingCustomers}
             />
-            <div className="mt-6 pt-6 border-t border-slate-700">
+            <div className="mt-6 pt-6 border-t border-border">
               <Button
                 type="button"
                 onClick={() => navigate('/customers')}
-                className="w-full bg-slate-700 hover:bg-slate-600 text-white border border-slate-600"
+                className="w-full bg-secondary hover:bg-secondary text-foreground border border-border"
               >
                 Cancel / Go Back
               </Button>

@@ -101,62 +101,62 @@ function CustomerForm({
   const customStyles: StylesConfig<{ value: number; label: string }, true> = {
     control: (provided, state) => ({
       ...provided,
-      backgroundColor: 'rgb(51 65 85)',
-      borderColor: state.isFocused ? 'rgb(59 130 246)' : 'rgb(71 85 105)',
-      boxShadow: state.isFocused ? '0 0 0 2px rgb(59 130 246)' : 'none',
+      backgroundColor: 'hsl(var(--card))',
+      borderColor: state.isFocused ? 'hsl(var(--ring))' : 'hsl(var(--border))',
+      boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--ring))' : 'none',
       '&:hover': {
-        borderColor: 'rgb(71 85 105)',
+        borderColor: 'hsl(var(--border))',
       },
-      color: 'white',
-      minHeight: '42px',
+      color: 'hsl(var(--foreground))',
+      minHeight: '44px',
     }),
     menu: provided => ({
       ...provided,
-      backgroundColor: 'rgb(51 65 85)',
-      border: '1px solid rgb(71 85 105)',
+      backgroundColor: 'hsl(var(--card))',
+      border: '1px solid hsl(var(--border))',
     }),
     option: (provided, state) => ({
       ...provided,
-      backgroundColor: state.isFocused ? 'rgb(59 130 246)' : 'rgb(51 65 85)',
-      color: 'white',
+      backgroundColor: state.isFocused ? 'hsl(var(--accent))' : 'hsl(var(--card))',
+      color: 'hsl(var(--foreground))',
       '&:hover': {
-        backgroundColor: 'rgb(37 99 235)',
+        backgroundColor: 'hsl(var(--accent))',
       },
     }),
     multiValue: provided => ({
       ...provided,
-      backgroundColor: 'rgb(30 58 138)',
+      backgroundColor: 'hsl(var(--accent))',
     }),
     multiValueLabel: provided => ({
       ...provided,
-      color: 'rgb(191 219 254)',
+      color: 'hsl(var(--accent-foreground))',
     }),
     multiValueRemove: provided => ({
       ...provided,
-      color: 'rgb(147 197 253)',
+      color: 'hsl(var(--accent-foreground))',
       '&:hover': {
-        backgroundColor: 'rgb(29 78 216)',
-        color: 'white',
+        backgroundColor: 'hsl(var(--accent))',
+        color: 'hsl(var(--foreground))',
       },
     }),
     input: provided => ({
       ...provided,
-      color: 'white',
+      color: 'hsl(var(--foreground))',
     }),
     placeholder: provided => ({
       ...provided,
-      color: 'rgb(148 163 184)',
+      color: 'hsl(var(--muted-foreground))',
     }),
     singleValue: provided => ({
       ...provided,
-      color: 'white',
+      color: 'hsl(var(--foreground))',
     }),
   };
 
   return (
     <form onSubmit={handleFormSubmit} className="space-y-5">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-1">
+        <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
           Name
         </label>
         <input
@@ -166,15 +166,15 @@ function CustomerForm({
           onChange={handleChange}
           placeholder="Enter Customer Name"
           id="name"
-          className={`w-full px-3 py-2 bg-slate-700 border ${errors.name ? 'border-red-500' : 'border-slate-600'} rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all`}
+          className={`w-full px-3 py-2 bg-secondary border ${errors.name ? 'border-destructive' : 'border-border'} rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all`}
         />
-        {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
+        {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
       </div>
 
       <div>
         <label
           htmlFor="customer_logo_url"
-          className="block text-sm font-medium text-slate-300 mb-1"
+          className="block text-sm font-medium text-foreground mb-2"
         >
           Brand Logo URL
         </label>
@@ -185,12 +185,12 @@ function CustomerForm({
           onChange={handleChange}
           placeholder="Enter Customer Logo URL"
           id="customer_logo_url"
-          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+          className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
         />
       </div>
 
       <div>
-        <label htmlFor="contact" className="block text-sm font-medium text-slate-300 mb-1">
+        <label htmlFor="contact" className="block text-sm font-medium text-foreground mb-2">
           Contact
         </label>
         <input
@@ -200,12 +200,12 @@ function CustomerForm({
           onChange={handleChange}
           placeholder="Enter Customer contact info"
           id="contact"
-          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+          className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
         />
       </div>
 
       <div>
-        <label htmlFor="address" className="block text-sm font-medium text-slate-300 mb-1">
+        <label htmlFor="address" className="block text-sm font-medium text-foreground mb-2">
           Address
         </label>
         <input
@@ -215,20 +215,20 @@ function CustomerForm({
           onChange={handleChange}
           placeholder="Enter Customer Address"
           id="address"
-          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+          className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
         />
       </div>
 
       <div>
         <label
           htmlFor="selected_products"
-          className="block text-sm font-medium text-slate-300 mb-1"
+          className="block text-sm font-medium text-foreground mb-2"
         >
           Products
         </label>
         <Select
           isMulti
-          id="selected_products"
+          inputId="selected_products"
           value={selectedProducts}
           onChange={products => setSelectedProducts([...products])}
           options={productOptions}
@@ -240,14 +240,14 @@ function CustomerForm({
       </div>
 
       {errors.products && (
-        <p role="alert" className="text-red-400">
+        <p role="alert" className="text-destructive">
           {errors.products}
         </p>
       )}
       <Button
         type="submit"
         disabled={!!errors.name || !!errors.products}
-        className={`w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-2.5 shadow-lg shadow-blue-500/25 transition-all ${errors.name ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-full bg-primary text-primary-foreground font-semibold py-2.5 shadow-sm shadow-primary/5 transition-all ${errors.name ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         {buttonText}
       </Button>

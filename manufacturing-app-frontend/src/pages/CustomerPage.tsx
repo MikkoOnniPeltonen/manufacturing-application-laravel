@@ -20,7 +20,7 @@ import {
   AccordionTrigger,
 } from '../components/ui/accordion';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import type { ChartPoint, Customer, ProductionLine, SaleRow, SaleStatus } from '../types';
 const OrderChart = lazy(() => import('../components/OrderChart'));
@@ -142,21 +142,21 @@ export default function CustomerPage() {
   );
   if (customer.error)
     return (
-      <p role="alert" className="p-6 text-red-400">
+      <p role="alert" className="p-6 text-destructive">
         Customer not found or unavailable.
       </p>
     );
   if (!customer.data) return <p className="p-6">Loading customer…</p>;
   const current = customer.data;
   return (
-    <main className="min-h-screen bg-slate-900 p-6 text-slate-100 space-y-6">
+    <main className="workspace-page space-y-6">
       <Link to="/customers" className="underline">
         Back to All Customers
       </Link>
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle>{current.name}</CardTitle>
+            <h1 className="workspace-title">{current.name}</h1>
           </CardHeader>
           <CardContent className="space-y-3">
             <p>Contact: {current.contact}</p>
@@ -173,9 +173,9 @@ export default function CustomerPage() {
             </Link>
           </CardContent>
         </Card>
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle>Selected Products</CardTitle>
+            <h2 className="text-lg font-semibold">Selected Products</h2>
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible>
@@ -209,7 +209,7 @@ export default function CustomerPage() {
           onChange={e => table.getColumn('productName')?.setFilterValue(e.target.value)}
         />
         <OrderTable table={table} />
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-wrap gap-3 items-center">
           <Button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
             Previous orders
           </Button>

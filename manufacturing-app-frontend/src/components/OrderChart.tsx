@@ -28,7 +28,7 @@ function OrderChart({
   });
 
   return (
-    <div className="w-full bg-slate-900 rounded-lg p-4 border border-slate-700 shadow-sm">
+    <div className="w-full bg-background rounded-lg p-4 border border-border shadow-sm">
       <ResponsiveContainer width="100%" height={400} className="min-h-[400px]">
         <BarChart data={completeChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <defs>
@@ -39,8 +39,8 @@ function OrderChart({
               height="8"
               patternTransform="rotate(45)"
             >
-              <rect width="4" height="8" fill="#f59e0b" />
-              <rect x="4" width="4" height="8" fill="#b45309" />
+              <rect width="4" height="8" fill="hsl(var(--chart-1))" />
+              <rect x="4" width="4" height="8" fill="hsl(var(--warning))" />
             </pattern>
             <pattern
               id="stripedBlue"
@@ -49,33 +49,33 @@ function OrderChart({
               height="8"
               patternTransform="rotate(45)"
             >
-              <rect width="4" height="8" fill="#60a5fa" />
-              <rect x="4" width="4" height="8" fill="#2563eb" />
+              <rect width="4" height="8" fill="hsl(var(--chart-4))" />
+              <rect x="4" width="4" height="8" fill="hsl(var(--chart-5))" />
             </pattern>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-slate-700" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
           <XAxis
             dataKey="productionLine"
             tickFormatter={value => (value.length > 15 ? `${value.slice(0, 15)}...` : value)}
             interval={0}
-            tick={{ fontSize: 12, fill: '#94a3b8' }}
-            axisLine={{ stroke: '#475569' }}
-            tickLine={{ stroke: '#475569' }}
+            tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+            axisLine={{ stroke: 'hsl(var(--border))' }}
+            tickLine={{ stroke: 'hsl(var(--border))' }}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: '#94a3b8' }}
-            axisLine={{ stroke: '#475569' }}
-            tickLine={{ stroke: '#475569' }}
+            tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+            axisLine={{ stroke: 'hsl(var(--border))' }}
+            tickLine={{ stroke: 'hsl(var(--border))' }}
             unit="%"
             domain={[0, 100]}
           />
           <Tooltip
-            cursor={{ fill: '#1e293b', opacity: 0.5 }}
+            cursor={{ fill: 'hsl(var(--muted))', opacity: 0.5 }}
             formatter={value => [`${value}%`, undefined]}
             contentStyle={{
-              backgroundColor: '#0f172a',
-              borderColor: '#334155',
-              color: '#f8fafc',
+              backgroundColor: 'hsl(var(--card))',
+              borderColor: 'hsl(var(--border))',
+              color: 'hsl(var(--foreground))',
               borderRadius: '0.5rem',
             }}
           />
@@ -93,14 +93,14 @@ function OrderChart({
             dataKey="in_production"
             name="Your Share (In Prod)"
             stackId="a"
-            fill="#a855f7" // Purple-500
+            fill="hsl(var(--chart-2))"
             radius={[0, 0, 0, 0]}
           />
           <Bar
             dataKey="delivered"
             name="Your Share (Done)"
             stackId="a"
-            fill="#10b981" // Emerald-500
+            fill="hsl(var(--chart-3))"
             radius={[4, 4, 0, 0]}
           />
 
@@ -116,7 +116,7 @@ function OrderChart({
             dataKey="avg_delivered"
             name="Avg Market Share (Done)"
             stackId="b"
-            fill="#1d4ed8" // Blue-700
+            fill="hsl(var(--chart-5))"
             radius={[4, 4, 0, 0]}
           />
         </BarChart>

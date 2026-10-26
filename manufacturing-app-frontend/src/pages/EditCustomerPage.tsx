@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -95,26 +95,28 @@ function EditCustomerPage() {
 
   if (loadError)
     return (
-      <p role="alert" className="p-6 text-red-400">
+      <p role="alert" className="p-6 text-destructive">
         Unable to load this customer.
       </p>
     );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      <div className="min-h-screen bg-background flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary/25" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 py-8 px-6">
+    <div className="workspace-page">
       <div className="max-w-2xl mx-auto">
         {customer && (
-          <Card className="shadow-lg rounded-xl bg-slate-800 border-slate-700">
-            <CardHeader className="p-6 bg-slate-900/50 border-b border-slate-700">
-              <CardTitle className="text-2xl font-bold text-white">Edit Customer</CardTitle>
+          <Card className="shadow-sm rounded-xl bg-card border-border">
+            <CardHeader className="p-6 bg-background/50 border-b border-border">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                Edit Customer
+              </h1>
             </CardHeader>
             <CardContent className="p-6">
               <CustomerForm
@@ -122,17 +124,17 @@ function EditCustomerPage() {
                 customerData={customer}
                 buttonText="Update Customer"
               />
-              <div className="mt-6 pt-6 border-t border-slate-700 flex justify-between gap-4">
+              <div className="mt-6 pt-6 border-t border-border flex justify-between gap-4">
                 <Button
                   type="button"
                   onClick={() => navigate(backPath)}
-                  className="bg-slate-700 hover:bg-slate-600 text-white flex-1 border border-slate-600"
+                  className="bg-secondary hover:bg-secondary text-foreground flex-1 border border-border"
                 >
                   Close / Cancel
                 </Button>
                 <Button
                   onClick={handleDeleteCustomer}
-                  className="bg-red-600 hover:bg-red-700 text-white shadow-sm flex-1"
+                  className="bg-destructive hover:bg-destructive/90 text-primary-foreground shadow-sm flex-1"
                 >
                   Delete Customer
                 </Button>

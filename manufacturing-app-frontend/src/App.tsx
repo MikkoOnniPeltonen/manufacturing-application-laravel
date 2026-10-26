@@ -22,7 +22,7 @@ const ProductionHistoryPage = lazy(() => import('./pages/ProductionHistoryPage')
 function RouteLoadingFallback() {
   return (
     <output className="min-h-screen flex items-center justify-center" aria-live="polite">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary/25" />
       <span className="sr-only">Loading page</span>
     </output>
   );

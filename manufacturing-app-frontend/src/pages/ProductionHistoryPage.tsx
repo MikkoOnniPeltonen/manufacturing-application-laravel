@@ -140,20 +140,20 @@ function ProductionHistoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary/25"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 font-sans border-t-4 border-amber-600">
+    <div className="workspace-page !max-w-[1600px]">
       {historyError && (
-        <p role="alert" className="mb-4 text-red-400">
+        <p role="alert" className="mb-4 text-destructive">
           Unable to load history. Check the filters and try again.
         </p>
       )}
-      <div className="flex items-center gap-4 mb-4 text-slate-300">
+      <div className="flex flex-wrap items-center gap-3 mb-6 text-foreground">
         <Button disabled={page <= 1 || isFetching} onClick={() => setPage(p => p - 1)}>
           Previous history
         </Button>
@@ -167,72 +167,76 @@ function ProductionHistoryPage() {
           Next history
         </Button>
       </div>
-      <div className="flex gap-6 h-[calc(100vh-100px)]">
+      <div className="flex flex-col gap-6 lg:flex-row">
         {/* Sidebar - Production Lines */}
-        <aside className="w-72 space-y-4 pr-2">
+        <aside className="w-full space-y-4 lg:w-56 lg:shrink-0">
           <div className="mb-6">
             <Link
               to="/"
-              className="flex items-center text-slate-400 hover:text-white transition-colors mb-4"
+              className="flex items-center text-muted-foreground hover:text-foreground transition-colors mb-4"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Dashboard
             </Link>
-            <div className="bg-amber-900/20 border border-amber-900/50 rounded-lg p-3">
-              <h2 className="text-amber-500 font-bold flex items-center gap-2">
+            <div className="bg-warning/10 border border-warning/50 rounded-lg p-3">
+              <h2 className="text-warning font-bold flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4" />
                 HISTORY MODE
               </h2>
-              <p className="text-xs text-amber-400/70 mt-1">Viewing historical state. Read-only.</p>
+              <p className="text-xs text-warning/70 mt-1">Viewing historical state. Read-only.</p>
             </div>
           </div>
 
-          <h2 className="text-xl font-bold text-white mb-4 pl-1">Production Lines</h2>
-          {productionLines.map(line => (
-            <div
-              key={line.id}
-              onClick={() => {
-                setSelectedLineId(line.id);
-                setPage(1);
-              }}
-              className={`
-                cursor-pointer transition-all duration-300 rounded-xl overflow-hidden border relative group
+          <h2 className="text-lg font-semibold text-foreground mb-4">Production Lines</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            {productionLines.map(line => (
+              <button
+                type="button"
+                aria-pressed={selectedLineId === line.id}
+                key={line.id}
+                onClick={() => {
+                  setSelectedLineId(line.id);
+                  setPage(1);
+                }}
+                className={`
+                w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer transition-all duration-300 rounded-xl overflow-hidden border relative group
                 ${
                   selectedLineId === line.id
-                    ? 'border-amber-600 bg-slate-800 shadow-lg ring-1 ring-amber-600'
-                    : 'border-slate-800 bg-slate-900/50 hover:bg-slate-800 hover:border-slate-700'
+                    ? 'border-primary bg-card shadow-sm ring-1 ring-ring'
+                    : 'border-border bg-background/50 hover:bg-card hover:border-border'
                 }
               `}
-            >
-              <img
-                src={line.product_logo_url ?? undefined}
-                alt={line.name}
-                className="w-full h-24 object-cover opacity-70 group-hover:opacity-100 transition-opacity"
-                onError={e => {
-                  e.currentTarget.src = 'https://via.placeholder.com/200x100?text=No+Image';
-                }}
-              />
-              <div className="p-3 bg-slate-800/80 backdrop-blur-sm">
-                <h3 className="text-white font-bold text-base">{line.name}</h3>
-              </div>
-            </div>
-          ))}
+              >
+                <img
+                  src={line.product_logo_url ?? undefined}
+                  alt={line.name}
+                  className="w-full h-20 lg:h-24 object-cover opacity-70 group-hover:opacity-100 transition-opacity"
+                  onError={e => {
+                    e.currentTarget.src = 'https://via.placeholder.com/200x100?text=No+Image';
+                  }}
+                />
+                <div className="p-3 bg-card/80 backdrop-blur-sm">
+                  <h3 className="text-foreground font-bold text-base">{line.name}</h3>
+                </div>
+              </button>
+            ))}
+          </div>
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+        <div className="min-w-0 flex-1 flex flex-col gap-5">
           {/* Controls Header */}
-          <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 shadow-sm space-y-4">
-            <div className="flex justify-between items-center">
+          <div className="bg-background/80 p-4 rounded-xl border border-border shadow-sm space-y-4">
+            <div className="flex flex-wrap justify-between items-center gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+                <h1 className="text-2xl font-semibold text-foreground tracking-tight flex items-center gap-3">
                   {selectedLine?.name || 'Select a Line'}
-                  <span className="text-lg font-normal text-slate-500">History Viewer</span>
+                  <span className="text-lg font-normal text-muted-foreground">History Viewer</span>
                 </h1>
               </div>
 
               {/* Mode Toggle */}
-              <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
+              <div className="flex bg-card rounded-lg p-1 border border-border">
                 <button
                   type="button"
                   onClick={() => {
@@ -241,8 +245,8 @@ function ProductionHistoryPage() {
                   }}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                     viewMode === 'range'
-                      ? 'bg-amber-600 text-white shadow'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-primary text-primary-foreground shadow'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   Date Range
@@ -255,8 +259,8 @@ function ProductionHistoryPage() {
                   }}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                     viewMode === 'search'
-                      ? 'bg-amber-600 text-white shadow'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-primary text-primary-foreground shadow'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   Search
@@ -264,32 +268,32 @@ function ProductionHistoryPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-6 border-t border-slate-800 pt-4">
+            <div className="flex flex-wrap items-center gap-4 border-t border-border pt-4">
               {viewMode === 'range' ? (
-                <div className="flex items-center gap-4 flex-1">
-                  <label className="flex items-center gap-2 text-sm text-slate-400">
+                <div className="grid min-w-0 flex-1 grid-cols-1 items-end gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                  <label className="grid min-w-0 gap-2 text-sm text-muted-foreground">
                     From:
                     <input
                       type="date"
                       value={dateRange.start}
                       onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                      className="bg-slate-800 border border-slate-700 text-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                      className="w-full min-w-0 bg-card border border-border text-foreground rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                     />
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-400">
+                  <label className="grid min-w-0 gap-2 text-sm text-muted-foreground">
                     To:
                     <input
                       type="date"
                       value={dateRange.end}
                       onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                      className="bg-slate-800 border border-slate-700 text-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                      className="w-full min-w-0 bg-card border border-border text-foreground rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                     />
                   </label>
                   <Button
                     onClick={handleSetToday}
                     variant="outline"
                     size="sm"
-                    className="border-amber-600/50 text-amber-500 hover:bg-amber-900/20"
+                    className="border-primary/25 text-primary hover:bg-accent/30"
                   >
                     Today
                   </Button>
@@ -297,11 +301,11 @@ function ProductionHistoryPage() {
               ) : (
                 /* Advanced Search Filters */
                 <div
-                  className="flex items-end gap-3 flex-1 overflow-x-auto pb-2"
+                  className="flex flex-wrap items-end gap-4 flex-1 pb-2"
                   onKeyDown={handleKeyDown}
                 >
                   <label className="space-y-1 block">
-                    <span className="text-xs text-slate-500">Product</span>
+                    <span className="text-xs text-muted-foreground">Product</span>
                     <input
                       type="text"
                       placeholder="Product Name"
@@ -309,11 +313,11 @@ function ProductionHistoryPage() {
                       onChange={e =>
                         setSearchParams(prev => ({ ...prev, product_name: e.target.value }))
                       }
-                      className="w-32 bg-slate-800 border border-slate-700 text-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="w-32 bg-card border border-border text-foreground rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                     />
                   </label>
                   <label className="space-y-1 block">
-                    <span className="text-xs text-slate-500">Customer</span>
+                    <span className="text-xs text-muted-foreground">Customer</span>
                     <input
                       type="text"
                       placeholder="Customer"
@@ -321,15 +325,15 @@ function ProductionHistoryPage() {
                       onChange={e =>
                         setSearchParams(prev => ({ ...prev, customer_name: e.target.value }))
                       }
-                      className="w-32 bg-slate-800 border border-slate-700 text-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="w-32 bg-card border border-border text-foreground rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                     />
                   </label>
                   <label className="space-y-1 block">
-                    <span className="text-xs text-slate-500">Status</span>
+                    <span className="text-xs text-muted-foreground">Status</span>
                     <select
                       value={searchParams.status}
                       onChange={e => setSearchParams(prev => ({ ...prev, status: e.target.value }))}
-                      className="w-32 bg-slate-800 border border-slate-700 text-white rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="w-32 bg-card border border-border text-foreground rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                     >
                       <option value="">Any Status</option>
                       <option value="pending">Pending</option>
@@ -339,7 +343,7 @@ function ProductionHistoryPage() {
                   </label>
                   <div className="space-y-1 flex items-end gap-1">
                     <label>
-                      <span className="text-xs text-slate-500 block">Qty Min</span>
+                      <span className="text-xs text-muted-foreground block">Qty Min</span>
                       <input
                         type="number"
                         placeholder="0"
@@ -347,13 +351,13 @@ function ProductionHistoryPage() {
                         onChange={e =>
                           setSearchParams(prev => ({ ...prev, min_quantity: e.target.value }))
                         }
-                        className="w-16 bg-slate-800 border border-slate-700 text-white rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-16 bg-card border border-border text-foreground rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                         min={0}
                       />
                     </label>
-                    <span className="mb-2 text-slate-500">-</span>
+                    <span className="mb-2 text-muted-foreground">-</span>
                     <label>
-                      <span className="text-xs text-slate-500 block">Max</span>
+                      <span className="text-xs text-muted-foreground block">Max</span>
                       <input
                         type="number"
                         placeholder="∞"
@@ -361,7 +365,7 @@ function ProductionHistoryPage() {
                         onChange={e =>
                           setSearchParams(prev => ({ ...prev, max_quantity: e.target.value }))
                         }
-                        className="w-16 bg-slate-800 border border-slate-700 text-white rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-16 bg-card border border-border text-foreground rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                         min={0}
                       />
                     </label>
@@ -369,7 +373,7 @@ function ProductionHistoryPage() {
 
                   <Button
                     onClick={handleSearchClick}
-                    className="bg-blue-600 hover:bg-blue-700 text-white ml-2"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground ml-2"
                   >
                     Search
                   </Button>
@@ -377,7 +381,7 @@ function ProductionHistoryPage() {
                     onClick={handleReset}
                     variant="outline"
                     size="icon"
-                    className="ml-2 border-slate-700 bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700"
+                    className="ml-2 border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary"
                     title="Reset Filters"
                   >
                     <RotateCcw className="h-4 w-4" />
@@ -386,7 +390,7 @@ function ProductionHistoryPage() {
               )}
 
               {fetchingHistory && (
-                <div className="flex items-center gap-2 text-amber-500 text-sm ml-auto">
+                <div className="flex items-center gap-2 text-warning text-sm ml-auto">
                   <Loader2 className="animate-spin h-4 w-4" />
                   Updating...
                 </div>
@@ -395,53 +399,55 @@ function ProductionHistoryPage() {
           </div>
 
           {/* Content Views */}
-          <div ref={parentRef} className="flex-1 overflow-hidden relative">
+          <div ref={parentRef} className="min-w-0 flex-1 relative">
             {fetchingHistory && (
-              <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm z-10 flex items-center justify-center">
-                <div className="text-amber-500 flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="absolute inset-0 bg-muted/60 backdrop-blur-sm z-10 flex items-center justify-center">
+                <div className="text-warning flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-warning border-t-transparent rounded-full animate-spin"></div>
                   Loading history...
                 </div>
               </div>
             )}
 
             {/* Unified 3-Column View for Both Modes */}
-            <div className="grid grid-cols-3 gap-6 h-full">
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
               {/* Total Sales Input / Search Results Column */}
-              <Card className="flex flex-col bg-slate-900/30 border-slate-800 shadow-sm overflow-hidden h-full opacity-90">
-                <CardHeader className="bg-slate-900/80 border-b border-slate-800 py-4 px-5 flex flex-row items-center justify-between">
+              <Card className="flex flex-col bg-background/30 border-border shadow-sm overflow-hidden h-full opacity-90">
+                <CardHeader className="bg-background/80 border-b border-border py-4 px-5 flex flex-row items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-blue-500/50"></div>
-                    <CardTitle className="text-slate-300 tracking-wide text-lg">
+                    <div className="h-2 w-2 rounded-full bg-primary/50"></div>
+                    <CardTitle className="text-foreground tracking-wide text-lg">
                       {viewMode === 'range' ? 'All Sales (Range)' : 'Search Results'}
                     </CardTitle>
                   </div>
-                  <div className="px-2 py-1 bg-slate-800 rounded text-xs font-mono text-slate-400 border border-slate-700">
+                  <div className="px-2 py-1 bg-card rounded text-xs font-mono text-muted-foreground border border-border">
                     {currentHistoryData.sales?.length || 0}
                   </div>
                 </CardHeader>
-                <CardContent className="flex-1 p-0 overflow-y-auto custom-scrollbar">
+                <CardContent className="max-h-[32rem] flex-1 p-0 overflow-y-auto custom-scrollbar">
                   <ul className="p-3 space-y-2">
                     {currentHistoryData.sales?.map(item => (
                       <li
                         key={item.id}
-                        className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 shadow-sm"
+                        className="p-3 rounded-lg bg-card/50 border border-border/50 shadow-sm"
                       >
                         <div className="flex justify-between items-start mb-1">
-                          <span className="font-semibold text-slate-300">{item.product?.name}</span>
-                          <span className="text-xs font-mono bg-slate-950 px-1.5 py-0.5 rounded text-slate-500">
+                          <span className="font-semibold text-foreground">
+                            {item.product?.name}
+                          </span>
+                          <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
                             {item.quantity}
                           </span>
                         </div>
-                        <div className="text-xs text-slate-500 flex justify-between items-center mt-2">
+                        <div className="text-xs text-muted-foreground flex flex-wrap justify-between items-center gap-4 mt-2">
                           <span>{item.customer?.name}</span>
                           <span
                             className={`text-[10px] px-1.5 py-0.5 rounded border ${
                               item.status === 'delivered'
-                                ? 'border-green-800 text-green-500'
+                                ? 'border-success text-success'
                                 : item.status === 'in_production'
-                                  ? 'border-purple-800 text-purple-500'
-                                  : 'border-slate-700 text-slate-500'
+                                  ? 'border-primary/25 text-primary'
+                                  : 'border-border text-muted-foreground'
                             }`}
                           >
                             {item.status.replace('_', ' ')}
@@ -450,50 +456,52 @@ function ProductionHistoryPage() {
                       </li>
                     ))}
                     {(!currentHistoryData.sales || currentHistoryData.sales.length === 0) && (
-                      <div className="mt-10 text-center text-slate-600 italic">No sales found</div>
+                      <div className="mt-10 text-center text-muted-foreground italic">
+                        No sales found
+                      </div>
                     )}
                   </ul>
                 </CardContent>
               </Card>
 
               {/* In Production Column */}
-              <Card className="flex flex-col bg-slate-900/30 border-slate-800 shadow-sm overflow-hidden h-full opacity-90">
-                <CardHeader className="bg-slate-900/80 border-b border-slate-800 py-4 px-5 flex flex-row items-center justify-between">
+              <Card className="flex flex-col bg-background/30 border-border shadow-sm overflow-hidden h-full opacity-90">
+                <CardHeader className="bg-background/80 border-b border-border py-4 px-5 flex flex-row items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-purple-500/50"></div>
-                    <CardTitle className="text-slate-300 tracking-wide text-lg">
+                    <div className="h-2 w-2 rounded-full bg-primary/50"></div>
+                    <CardTitle className="text-foreground tracking-wide text-lg">
                       In Production
                     </CardTitle>
                   </div>
-                  <div className="px-2 py-1 bg-slate-800 rounded text-xs font-mono text-slate-400 border border-slate-700">
+                  <div className="px-2 py-1 bg-card rounded text-xs font-mono text-muted-foreground border border-border">
                     {currentHistoryData.sales?.filter(s => s.status === 'in_production').length ||
                       0}
                   </div>
                 </CardHeader>
-                <CardContent className="flex-1 p-0 overflow-y-auto custom-scrollbar">
+                <CardContent className="max-h-[32rem] flex-1 p-0 overflow-y-auto custom-scrollbar">
                   <ul className="p-3 space-y-2">
                     {currentHistoryData.sales
                       ?.filter(s => s.status === 'in_production')
                       .map(item => (
                         <li
                           key={item.id}
-                          className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 shadow-sm"
+                          className="p-3 rounded-lg bg-card/50 border border-border/50 shadow-sm"
                         >
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="font-semibold text-slate-300">
+                          <div className="flex flex-wrap justify-between items-center gap-4 mb-2">
+                            <span className="font-semibold text-foreground">
                               {item.product?.name}
                             </span>
                           </div>
-                          <div className="text-xs text-slate-400 flex justify-between">
+                          <div className="text-xs text-muted-foreground flex justify-between">
                             <span>{item.quantity} units</span>
-                            <span className="text-purple-400/70 font-medium">Processing</span>
+                            <span className="text-primary/70 font-medium">Processing</span>
                           </div>
                         </li>
                       ))}
                     {(!currentHistoryData.sales ||
                       currentHistoryData.sales.filter(s => s.status === 'in_production').length ===
                         0) && (
-                      <div className="mt-10 text-center text-slate-600 italic">
+                      <div className="mt-10 text-center text-muted-foreground italic">
                         No matching production items
                       </div>
                     )}
@@ -502,36 +510,36 @@ function ProductionHistoryPage() {
               </Card>
 
               {/* Completed Column */}
-              <Card className="flex flex-col bg-slate-900/30 border-slate-800 shadow-sm overflow-hidden h-full opacity-90">
-                <CardHeader className="bg-slate-900/80 border-b border-slate-800 py-4 px-5 flex flex-row items-center justify-between">
+              <Card className="flex flex-col bg-background/30 border-border shadow-sm overflow-hidden h-full opacity-90">
+                <CardHeader className="bg-background/80 border-b border-border py-4 px-5 flex flex-row items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500/50" />
-                    <CardTitle className="text-slate-300 tracking-wide text-lg">
+                    <div className="h-2 w-2 rounded-full bg-success/50" />
+                    <CardTitle className="text-foreground tracking-wide text-lg">
                       Completed
                     </CardTitle>
                   </div>
-                  <div className="px-2 py-1 bg-slate-800 rounded text-xs font-mono text-slate-400 border border-slate-700">
+                  <div className="px-2 py-1 bg-card rounded text-xs font-mono text-muted-foreground border border-border">
                     {currentHistoryData.sales?.filter(s => s.status === 'delivered').length || 0}
                   </div>
                 </CardHeader>
-                <CardContent className="flex-1 p-0 overflow-y-auto custom-scrollbar">
+                <CardContent className="max-h-[32rem] flex-1 p-0 overflow-y-auto custom-scrollbar">
                   <ul className="p-3 space-y-2">
                     {currentHistoryData.sales
                       ?.filter(s => s.status === 'delivered')
                       .map(item => (
                         <li
                           key={item.id}
-                          className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 shadow-sm opacity-80 hover:opacity-100 transition-opacity"
+                          className="p-3 rounded-lg bg-card/50 border border-border/50 shadow-sm opacity-80 hover:opacity-100 transition-opacity"
                         >
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-semibold text-slate-300">
+                          <div className="flex flex-wrap justify-between items-center gap-4 mb-1">
+                            <span className="font-semibold text-foreground">
                               {item.product?.name}
                             </span>
-                            <span className="text-xs bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded">
+                            <span className="text-xs bg-success/10 text-success px-1.5 py-0.5 rounded">
                               Done
                             </span>
                           </div>
-                          <div className="text-xs text-slate-500 flex justify-between">
+                          <div className="text-xs text-muted-foreground flex justify-between">
                             <span>{item.quantity} units</span>
                             <span>{item.customer?.name}</span>
                           </div>
@@ -540,7 +548,7 @@ function ProductionHistoryPage() {
                     {(!currentHistoryData.sales ||
                       currentHistoryData.sales.filter(s => s.status === 'delivered').length ===
                         0) && (
-                      <div className="mt-10 text-center text-slate-600 italic">
+                      <div className="mt-10 text-center text-muted-foreground italic">
                         No matching completed sales
                       </div>
                     )}

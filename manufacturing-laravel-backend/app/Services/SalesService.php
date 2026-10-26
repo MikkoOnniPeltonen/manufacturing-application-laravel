@@ -35,7 +35,7 @@ class SalesService
             ])->get();
 
             if ($customers->isEmpty()) {
-                throw ValidationException::withMessages(['production_line_id' => 'No eligible customers found.']);
+                throw ValidationException::withMessages(['production_line_id' => 'No customers are assigned products on this production line. Assign a product to a customer before generating sales.']);
             }
 
             $sales = [];

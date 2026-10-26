@@ -4,42 +4,61 @@
 
 @layer base {
   :root {
-    --background: 222.2 47.4% 11.2%;
-    --foreground: 210 40% 98%;
-
-    --card: 217.2 32.6% 17.5%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 217.2 32.6% 17.5%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    color-scheme: light;
+    --radius: 0.625rem;
+    --background: 48.0 21.7% 95.5%;
+    --foreground: 152.0 23.1% 12.7%;
+    --card: 0.0 0.0% 100.0%;
+    --card-foreground: 152.0 23.1% 12.7%;
+    --popover: 0.0 0.0% 100.0%;
+    --popover-foreground: 152.0 23.1% 12.7%;
+    --primary: 146.7 27.3% 19.4%;
+    --primary-foreground: 0.0 0.0% 100.0%;
+    --secondary: 83.1 25.5% 90.0%;
+    --secondary-foreground: 147.0 21.3% 18.4%;
+    --muted: 80.0 23.1% 92.4%;
+    --muted-foreground: 143.1 6.0% 42.5%;
+    --accent: 76.5 52.5% 76.9%;
+    --accent-foreground: 147.0 21.3% 18.4%;
+    --destructive: 2.4 53.8% 45.9%;
+    --destructive-foreground: 0.0 0.0% 100.0%;
+    --success: 105.0 27.3% 34.5%;
+    --success-foreground: 0.0 0.0% 100.0%;
+    --warning: 38.3 74.8% 31.2%;
+    --warning-foreground: 0.0 0.0% 100.0%;
+    --border: 100.0 11.7% 84.9%;
+    --input: 100.0 11.7% 84.9%;
+    --ring: 96.8 27.8% 40.2%;
+    --chart-1: 38.7 55.9% 44.5%;
+    --chart-2: 146.7 27.3% 19.4%;
+    --chart-3: 90.0 22.8% 49.8%;
+    --chart-4: 78.2 24.8% 73.9%;
+    --chart-5: 109.7 13.4% 42.5%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-slate-900 text-slate-50;
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+@layer components {
+  .workspace-page {
+    @apply mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8;
+  }
+
+  .workspace-panel {
+    @apply rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6;
+  }
+
+  .workspace-title {
+    @apply text-2xl font-semibold tracking-tight sm:text-3xl;
+  }
+
+  .workspace-subtitle {
+    @apply text-sm leading-6 text-muted-foreground;
   }
 }

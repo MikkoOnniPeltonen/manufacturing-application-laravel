@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { fetchCollection } from '../api/collections';
+import { apiErrorMessage } from '../api/errors';
 import type { components } from '../api/generated';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -10,16 +11,27 @@ import { Input } from '../components/ui/input';
 type Sale = components['schemas']['SaleResource'];
 type Status = components['schemas']['SaleStatus'];
 const tomorrow = () => new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-const inputClass = 'rounded border border-slate-600 bg-slate-800 p-2 text-white';
+const inputClass =
+  'h-11 w-full min-w-0 rounded-lg border border-input bg-card px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 export default function OrdersPage() {
   const client = useQueryClient();
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<Status | ''>('');
   const [customerId, setCustomerId] = useState('');
+  const [productId, setProductId] = useState('');
   const [editing, setEditing] = useState<Sale | null>(null);
   const [cancelling, setCancelling] = useState<Sale | null>(null);
   const [message, setMessage] = useState('');
+  const actionForm = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (!editing && !cancelling) return;
+    actionForm.current?.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'center',
+    });
+    actionForm.current?.querySelector('input')?.focus({ preventScroll: true });
+  }, [editing, cancelling]);
   const customers = useQuery({
     queryKey: ['order-customers'],
     queryFn: () =>
@@ -37,6 +49,36 @@ export default function OrdersPage() {
       if (error || !data) throw new Error('Unable to load customer products.');
       return data;
     },
+  });
+  const products = useQuery({
+    queryKey: ['order-products'],
+    queryFn: () =>
+      fetchCollection(page =>
+        apiClient.GET('/v1/products', { params: { query: { page, per_page: 100 } } }),
+      ),
+  });
+  const assignedProducts = customer.data?.selected_products ?? [];
+  const unassignedProducts = (products.data ?? []).filter(
+    product => !assignedProducts.some(assigned => assigned.id === product.id),
+  );
+  const productIsAssigned = assignedProducts.some(product => String(product.id) === productId);
+  const assignment = useMutation({
+    mutationFn: async (selection: { customerId: string; productId: string }) => {
+      const { data, error } = await apiClient.POST('/v1/customers/{customer}/products/{product}', {
+        params: {
+          path: { customer: Number(selection.customerId), product: Number(selection.productId) },
+        },
+      });
+      if (error || !data) throw new Error(apiErrorMessage(error, 'Unable to assign this product.'));
+      return data;
+    },
+    onSuccess: (data, selection) => {
+      client.setQueryData(['customer', selection.customerId], data);
+      client.invalidateQueries({ queryKey: ['customers'] });
+      client.invalidateQueries({ queryKey: ['order-customers'] });
+      setMessage('Product assigned. You can now create the order.');
+    },
+    onError: error => setMessage(error.message),
   });
   const orders = useQuery({
     queryKey: ['orders', page, status],
@@ -102,9 +144,12 @@ export default function OrdersPage() {
       }
     },
     onSuccess: saved,
-    onError: () =>
+    onError: error =>
       setMessage(
-        'Unable to save. Check the fields; only pending orders can be edited or cancelled.',
+        apiErrorMessage(
+          error,
+          'Unable to save. Check the fields; only pending orders can be edited or cancelled.',
+        ),
       ),
   });
   const submit = (
@@ -117,26 +162,47 @@ export default function OrdersPage() {
     mutation.mutate({ form: new FormData(event.currentTarget), mode, sale });
   };
   return (
-    <main className="min-h-screen bg-slate-900 p-6 text-slate-100 space-y-6">
-      <div className="flex gap-5">
+    <main className="workspace-page space-y-6">
+      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
         <Link to="/">Dashboard</Link>
         <Link to="/admin/audit">Audit trail</Link>
         <Link to="/admin/operations">Operations</Link>
       </div>
-      <h1 className="text-3xl font-bold">Orders</h1>
-      {message && <output>{message}</output>}
-      {(orders.error || customers.error || customer.error) && (
+      <header className="space-y-2">
+        <h1 className="workspace-title">Orders</h1>
+        <p className="workspace-subtitle">
+          Create customer orders, review delivery dates, and manage pending changes.
+        </p>
+      </header>
+      {message && (
+        <output
+          className="block rounded-lg border border-border bg-card px-4 py-3 text-sm"
+          aria-live="polite"
+        >
+          {message}
+        </output>
+      )}
+      {(orders.error || customers.error || customer.error || products.error) && (
         <p role="alert">Unable to load order data. Reload to retry.</p>
       )}
-      <section className="rounded border border-slate-700 p-4">
-        <h2 className="text-xl mb-3">Create order</h2>
-        <form onSubmit={e => submit(e, 'create')} className="flex flex-wrap gap-4 items-end">
-          <label className="grid gap-1">
+      <section className="workspace-panel space-y-5">
+        <h2 className="text-lg font-semibold">Create order</h2>
+        <form
+          onSubmit={e => submit(e, 'create')}
+          className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 items-end"
+        >
+          <label className="grid min-w-0 gap-2 text-sm font-medium">
             Customer
             <select
               className={inputClass}
               value={customerId}
-              onChange={e => setCustomerId(e.target.value)}
+              onChange={e => {
+                setCustomerId(e.target.value);
+                setProductId('');
+                setMessage('');
+                assignment.reset();
+              }}
+              disabled={assignment.isPending || mutation.isPending}
               required
             >
               <option value="">Select customer</option>
@@ -147,33 +213,52 @@ export default function OrdersPage() {
               ))}
             </select>
           </label>
-          <label className="grid gap-1">
+          <label className="grid min-w-0 gap-2 text-sm font-medium">
             Product
             <select
-              key={customerId}
               name="product"
               className={inputClass}
-              defaultValue=""
+              value={productId}
+              onChange={e => {
+                setProductId(e.target.value);
+                setMessage('');
+                assignment.reset();
+              }}
               required
-              disabled={!customer.data}
+              disabled={
+                !customer.data || products.isPending || assignment.isPending || mutation.isPending
+              }
             >
-              <option value="">Select assigned product</option>
-              {customer.data?.selected_products?.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
+              <option value="">{!customerId ? 'Choose a customer first' : 'Select product'}</option>
+              {assignedProducts.length > 0 && (
+                <optgroup label="Assigned to customer">
+                  {assignedProducts.map(product => (
+                    <option key={product.id} value={product.id}>
+                      {product.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {unassignedProducts.length > 0 && (
+                <optgroup label="Available to assign">
+                  {unassignedProducts.map(product => (
+                    <option key={product.id} value={product.id}>
+                      {product.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </label>
-          <label className="grid gap-1">
+          <label className="grid min-w-0 gap-2 text-sm font-medium">
             Quantity
             <Input name="quantity" type="number" min={1} max={1000000} defaultValue={10} required />
           </label>
-          <label className="grid gap-1">
+          <label className="grid min-w-0 gap-2 text-sm font-medium">
             Delivery date
             <Input name="date" type="date" defaultValue={tomorrow()} required />
           </label>
-          <label className="grid gap-1">
+          <label className="grid min-w-0 gap-2 text-sm font-medium">
             Reason
             <Input
               name="reason"
@@ -183,18 +268,34 @@ export default function OrdersPage() {
               required
             />
           </label>
-          <Button disabled={mutation.isPending || !customer.data?.selected_products?.length}>
+          <Button disabled={mutation.isPending || assignment.isPending || !productIsAssigned}>
             Create order
           </Button>
         </form>
-        {customer.data && !customer.data.selected_products?.length && (
-          <p className="mt-3">
-            Assign products on the{' '}
-            <Link className="underline" to={`/customers/${customerId}/edit`}>
-              customer page
-            </Link>{' '}
-            before creating an order.
+        {customer.data && productId && !productIsAssigned && (
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-primary/20 bg-accent/20 p-4">
+            <p className="max-w-xl text-sm leading-6">
+              This product is not assigned to {customer.data.name} yet. Assign it here to enable
+              ordering and sales generation for its production line.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={assignment.isPending}
+              onClick={() => assignment.mutate({ customerId, productId })}
+            >
+              {assignment.isPending ? 'Assigning…' : 'Assign to customer'}
+            </Button>
+          </div>
+        )}
+        {customer.data && !productId && !assignedProducts.length && (
+          <p className="text-sm leading-6 text-muted-foreground">
+            This customer has no assigned products. Choose a product from the catalog, then assign
+            it here before creating an order.
           </p>
+        )}
+        {customer.data && products.data?.length === 0 && (
+          <p className="text-sm text-muted-foreground">No products are available in the catalog.</p>
         )}
       </section>
       <label className="flex gap-3 items-center">
@@ -216,9 +317,9 @@ export default function OrdersPage() {
         </select>
       </label>
       {orders.isLoading && <p>Loading orders…</p>}
-      <div className="overflow-auto">
-        <table className="w-full text-left">
-          <thead>
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+        <table className="w-full min-w-[880px] text-left text-sm [&_td]:px-4 [&_td]:py-4">
+          <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               {[
                 'Order',
@@ -228,15 +329,22 @@ export default function OrdersPage() {
                 'Status',
                 'Actions',
               ].map(h => (
-                <th className="p-3" key={h}>
+                <th className="px-4 py-4 font-medium" key={h}>
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
+            {!orders.isLoading && !orders.error && orders.data?.data.length === 0 && (
+              <tr>
+                <td colSpan={6} className="text-center text-muted-foreground">
+                  No orders match this filter.
+                </td>
+              </tr>
+            )}
             {orders.data?.data.map(order => (
-              <tr key={order.id} className="border-t border-slate-700">
+              <tr key={order.id} className="border-t border-border">
                 <td className="p-3 font-mono text-xs">{order.id.slice(0, 8)}</td>
                 <td className="p-3">
                   {order.customer?.name} / {order.product?.name}
@@ -244,7 +352,7 @@ export default function OrdersPage() {
                 <td>{order.quantity}</td>
                 <td>{order.date_to_deliver.slice(0, 10)}</td>
                 <td>{order.status.replaceAll('_', ' ')}</td>
-                <td className="flex gap-2 py-3">
+                <td className="flex flex-wrap items-center gap-2 py-3">
                   {order.status === 'pending' && (
                     <>
                       <Button
@@ -277,12 +385,15 @@ export default function OrdersPage() {
       </div>
       {editing && (
         <form
+          ref={actionForm}
           key={editing.id}
-          className="flex flex-wrap gap-4 border border-blue-500 p-4"
+          className="workspace-panel grid items-end gap-5 border-primary/30 sm:grid-cols-2 lg:grid-cols-3"
           onSubmit={e => submit(e, 'edit', editing)}
         >
-          <h2>Edit pending order {editing.id.slice(0, 8)}</h2>
-          <label>
+          <h2 className="text-lg font-semibold sm:col-span-2 lg:col-span-3">
+            Edit pending order {editing.id.slice(0, 8)}
+          </h2>
+          <label className="grid gap-2 text-sm font-medium">
             Quantity
             <Input
               name="quantity"
@@ -293,7 +404,7 @@ export default function OrdersPage() {
               required
             />
           </label>
-          <label>
+          <label className="grid gap-2 text-sm font-medium">
             Delivery date
             <Input
               name="date"
@@ -302,7 +413,7 @@ export default function OrdersPage() {
               required
             />
           </label>
-          <label>
+          <label className="grid gap-2 text-sm font-medium">
             Reason
             <Input name="reason" minLength={3} maxLength={500} required />
           </label>
@@ -314,10 +425,11 @@ export default function OrdersPage() {
       )}
       {cancelling && (
         <form
-          className="flex gap-4 border border-red-500 p-4"
+          ref={actionForm}
+          className="workspace-panel flex flex-wrap items-end gap-4 border-destructive/40"
           onSubmit={e => submit(e, 'cancel', cancelling)}
         >
-          <label>
+          <label className="grid gap-2 text-sm font-medium">
             Cancellation reason
             <Input name="reason" minLength={3} maxLength={500} required />
           </label>
@@ -329,7 +441,7 @@ export default function OrdersPage() {
           </Button>
         </form>
       )}
-      <div className="flex gap-4 items-center">
+      <div className="flex flex-wrap gap-3 items-center">
         <Button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
           Previous orders
         </Button>

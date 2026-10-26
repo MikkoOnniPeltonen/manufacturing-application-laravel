@@ -206,21 +206,21 @@ function ManagerViewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary/25"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 p-6 font-sans">
+    <div className="workspace-page !max-w-[1600px]">
       {(linesError || salesError) && (
-        <p role="alert" className="mb-4 text-red-400">
+        <p role="alert" className="mb-4 text-destructive">
           Unable to load production data. Reload to try again.
         </p>
       )}
       {latestRun && (
-        <output className="mb-4 p-3 rounded border border-slate-600 text-slate-100">
+        <output className="mb-6 block rounded-xl border border-border bg-card p-4 text-sm leading-6 text-foreground">
           Production run: {latestRun.status} — {latestRun.processed_count} / {latestRun.total_count}{' '}
           orders.
           {activeRun && <span> Processing continues on the server. You can close this page.</span>}
@@ -232,100 +232,108 @@ function ManagerViewPage() {
           )}
         </output>
       )}
-      <div className="flex gap-6 h-[calc(100vh-100px)]">
+      <div className="flex flex-col gap-6 lg:flex-row">
         {/* Sidebar - Production Lines */}
-        <aside className="w-72 space-y-4 pr-2">
+        <aside className="w-full space-y-4 lg:w-56 lg:shrink-0">
           <Link
             to="/"
-            className="flex items-center text-slate-400 hover:text-white transition-colors mb-4"
+            className="flex items-center text-muted-foreground hover:text-foreground transition-colors mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Link>
-          <h2 className="text-xl font-bold text-white mb-4 pl-1">Production Lines</h2>
-          {productionLines.map(line => (
-            <div
-              key={line.id}
-              onClick={() => !isProcessing && !isSaving && setSelectedLineId(line.id)}
-              className={`
-                cursor-pointer transition-all duration-300 rounded-xl overflow-hidden border relative group
+          <h2 className="text-lg font-semibold text-foreground mb-4">Production Lines</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            {productionLines.map(line => (
+              <button
+                type="button"
+                aria-pressed={selectedLineId === line.id}
+                key={line.id}
+                onClick={() => !isProcessing && !isSaving && setSelectedLineId(line.id)}
+                className={`
+                w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer transition-all duration-300 rounded-xl overflow-hidden border relative group
                 ${
                   selectedLineId === line.id
-                    ? 'border-blue-500 bg-slate-800 shadow-lg ring-1 ring-blue-500'
-                    : 'border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:border-slate-600'
+                    ? 'border-primary/25 bg-card shadow-lg ring-1 ring-ring'
+                    : 'border-border bg-card/50 hover:bg-card hover:border-border'
                 }
                 ${isProcessing || isSaving ? 'opacity-80' : ''}
               `}
-            >
-              <img
-                src={line.product_logo_url ?? undefined}
-                alt={line.name}
-                className="w-full h-32 object-cover"
-                onError={e => {
-                  e.currentTarget.src = 'https://via.placeholder.com/200x100?text=No+Image';
-                }}
-              />
-              <div className="p-3 bg-slate-800">
-                <h3 className="text-white font-bold text-lg">{line.name}</h3>
-                {line.has_sales ? (
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-                    </span>
-                    <span className="text-xs font-medium text-amber-500">Pending Actions</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-xs font-medium text-emerald-500">All Caught Up</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+              >
+                <img
+                  src={line.product_logo_url ?? undefined}
+                  alt={line.name}
+                  className="w-full h-20 lg:h-28 object-cover"
+                  onError={e => {
+                    e.currentTarget.src = 'https://via.placeholder.com/200x100?text=No+Image';
+                  }}
+                />
+                <div className="p-3 bg-card">
+                  <h3 className="text-foreground font-bold text-lg">{line.name}</h3>
+                  {line.has_sales ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-warning"></span>
+                      </span>
+                      <span className="text-xs font-medium text-warning">Pending Actions</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="h-2 w-2 rounded-full bg-success"></span>
+                      <span className="text-xs font-medium text-success">All Caught Up</span>
+                    </div>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+        <div className="min-w-0 flex-1 flex flex-col gap-5">
           {/* Status Header */}
-          <div className="flex justify-between items-center bg-slate-800/80 p-4 rounded-xl border border-slate-700 shadow-sm">
+          <div className="flex flex-wrap justify-between items-center gap-4 bg-card/80 p-4 rounded-xl border border-border shadow-sm">
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
+              <h1 className="text-2xl font-semibold text-foreground tracking-tight">
                 {selectedLine?.name || 'Select a Line'}
               </h1>
-              <p className="text-slate-400 text-sm">Manage production workflow and processing</p>
+              <p className="text-muted-foreground text-sm">
+                Manage production workflow and processing
+              </p>
             </div>
 
             {isProcessing && (
-              <div className="flex items-center gap-3 px-4 py-2 bg-blue-900/30 border border-blue-800 rounded-full animate-pulse">
-                <Loader2 className="animate-spin text-blue-400 h-5 w-5" />
-                <span className="text-blue-300 font-medium">Production in progress...</span>
+              <div className="flex items-center gap-3 px-4 py-2 bg-accent/30 border border-primary/25 rounded-full animate-pulse">
+                <Loader2 className="animate-spin text-primary h-5 w-5" />
+                <span className="text-primary font-medium">Production in progress...</span>
               </div>
             )}
 
             {isSaving && (
-              <div className="flex items-center gap-3 px-4 py-2 bg-amber-900/30 border border-amber-800 rounded-full">
-                <Loader2 className="animate-spin text-amber-500 h-5 w-5" />
-                <span className="text-amber-400 font-medium">Saving changes...</span>
+              <div className="flex items-center gap-3 px-4 py-2 bg-warning/10 border border-warning rounded-full">
+                <Loader2 className="animate-spin text-warning h-5 w-5" />
+                <span className="text-warning font-medium">Saving changes...</span>
               </div>
             )}
           </div>
 
           {/* Three Column Workflow */}
-          <div className="flex-1 grid grid-cols-3 gap-6 min-h-0">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
             {/* Sales Column */}
-            <Card className="flex flex-col bg-slate-800/50 border-slate-700 shadow-sm overflow-hidden h-full">
-              <CardHeader className="bg-slate-900/50 border-b border-slate-700 py-4 px-5 flex flex-row items-center justify-between">
+            <Card className="flex flex-col bg-card/50 border-border shadow-sm overflow-hidden h-full">
+              <CardHeader className="bg-background/50 border-b border-border py-4 px-5 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                  <CardTitle className="text-white tracking-wide text-lg">Sales Orders</CardTitle>
+                  <div className="h-2 w-2 rounded-full bg-primary"></div>
+                  <CardTitle className="text-foreground tracking-wide text-lg">
+                    Sales Orders
+                  </CardTitle>
                 </div>
-                <div className="px-2 py-1 bg-blue-900/30 rounded text-xs font-mono text-blue-300 border border-blue-800">
+                <div className="px-2 py-1 bg-accent/30 rounded text-xs font-mono text-primary border border-primary/25">
                   {pendingSales.length}
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 p-0 overflow-y-auto custom-scrollbar bg-slate-900/30">
+              <CardContent className="max-h-[32rem] flex-1 p-0 overflow-y-auto custom-scrollbar bg-background/30">
                 {pendingSales.length > 0 ? (
                   <ul className="p-3 space-y-2">
                     {pendingSales.map(item => (
@@ -333,18 +341,20 @@ function ManagerViewPage() {
                         key={item.id}
                         onDoubleClick={() => handleStageItem(item)}
                         title="Double-click to stage"
-                        className="p-3 rounded-lg bg-slate-800 border border-slate-700 hover:border-blue-500/50 transition-all duration-200 group/item shadow-sm cursor-pointer select-none hover:bg-slate-700/50"
+                        className="p-3 rounded-lg bg-card border border-border hover:border-primary/50 transition-all duration-200 group/item shadow-sm cursor-pointer select-none hover:bg-secondary/50"
                       >
                         <div className="flex justify-between items-start mb-1">
-                          <span className="font-semibold text-white">{item.product?.name}</span>
-                          <span className="text-xs font-mono bg-slate-950 px-1.5 py-0.5 rounded text-slate-400">
+                          <span className="font-semibold text-foreground">
+                            {item.product?.name}
+                          </span>
+                          <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
                             {item.quantity} units
                           </span>
                         </div>
                         <div className="flex justify-between items-end">
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-muted-foreground">
                             <p>{item.customer?.name}</p>
-                            <p className="text-slate-500 mt-0.5">
+                            <p className="text-muted-foreground mt-0.5">
                               {new Date(item.date_to_deliver).toLocaleDateString()}
                             </p>
                           </div>
@@ -353,8 +363,8 @@ function ManagerViewPage() {
                     ))}
                   </ul>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-500 p-6 text-center">
-                    <div className="bg-slate-800/50 p-4 rounded-full mb-3">
+                  <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-6 text-center">
+                    <div className="bg-card/50 p-4 rounded-full mb-3">
                       <svg
                         className="w-8 h-8 opacity-50"
                         fill="none"
@@ -373,11 +383,11 @@ function ManagerViewPage() {
                   </div>
                 )}
               </CardContent>
-              <div className="p-3 border-t border-slate-700 bg-slate-800">
+              <div className="p-3 border-t border-border bg-card">
                 <Button
                   onClick={handleEdit}
                   disabled={pendingSales.length === 0 || isProcessing || isSaving}
-                  className="w-full bg-slate-700 hover:bg-slate-600 text-white shadow-sm transition-all duration-300"
+                  className="w-full bg-secondary hover:bg-secondary text-foreground shadow-sm transition-all duration-300"
                 >
                   Select up to 100 for Production
                 </Button>
@@ -385,17 +395,17 @@ function ManagerViewPage() {
             </Card>
 
             {/* Selection Column */}
-            <Card className="flex flex-col bg-slate-800/50 border-slate-700 shadow-sm overflow-hidden h-full">
-              <CardHeader className="bg-slate-900/50 border-b border-slate-700 py-4 px-5 flex flex-row items-center justify-between">
+            <Card className="flex flex-col bg-card/50 border-border shadow-sm overflow-hidden h-full">
+              <CardHeader className="bg-background/50 border-b border-border py-4 px-5 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-                  <CardTitle className="text-white tracking-wide text-lg">Staging</CardTitle>
+                  <div className="h-2 w-2 rounded-full bg-success"></div>
+                  <CardTitle className="text-foreground tracking-wide text-lg">Staging</CardTitle>
                 </div>
-                <div className="px-2 py-1 bg-emerald-900/30 rounded text-xs font-mono text-emerald-300 border border-emerald-800">
+                <div className="px-2 py-1 bg-success/10 rounded text-xs font-mono text-success border border-success">
                   {selectedItems.length}
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 p-0 overflow-y-auto custom-scrollbar bg-slate-900/30">
+              <CardContent className="max-h-[32rem] flex-1 p-0 overflow-y-auto custom-scrollbar bg-background/30">
                 {selectedItems.length > 0 ? (
                   <ul ref={parentRef} className="p-3 space-y-2">
                     {selectedItems.map((item, index) => (
@@ -403,11 +413,13 @@ function ManagerViewPage() {
                         key={item.id}
                         onDoubleClick={() => handleUnstageItem(item)}
                         title="Double-click to unstage"
-                        className="p-3 rounded-lg bg-slate-800 border border-emerald-500/30 hover:border-emerald-500/60 transition-all duration-200 shadow-sm relative pl-4 pr-12 cursor-pointer select-none hover:bg-slate-700/50"
+                        className="p-3 rounded-lg bg-card border border-success/30 hover:border-success/60 transition-all duration-200 shadow-sm relative pl-4 pr-12 cursor-pointer select-none hover:bg-secondary/50"
                       >
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 rounded-l-lg"></div>
-                        <div className="font-semibold text-white mb-1">{item.product?.name}</div>
-                        <div className="text-xs text-slate-400">
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-success rounded-l-lg"></div>
+                        <div className="font-semibold text-foreground mb-1">
+                          {item.product?.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
                           {item.customer?.name} • {item.quantity} units
                         </div>
 
@@ -417,7 +429,7 @@ function ManagerViewPage() {
                             variant="ghost"
                             onClick={() => moveItem(index, -1)}
                             disabled={index === 0}
-                            className="h-6 w-6 p-0 text-slate-500 hover:text-emerald-400 disabled:opacity-30 transition-colors hover:bg-transparent"
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-success disabled:opacity-30 transition-colors hover:bg-transparent"
                           >
                             <ArrowUp className="w-3 h-3" />
                           </Button>
@@ -426,7 +438,7 @@ function ManagerViewPage() {
                             variant="ghost"
                             onClick={() => moveItem(index, 1)}
                             disabled={index === selectedItems.length - 1}
-                            className="h-6 w-6 p-0 text-slate-500 hover:text-emerald-400 disabled:opacity-30 transition-colors hover:bg-transparent"
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-success disabled:opacity-30 transition-colors hover:bg-transparent"
                           >
                             <ArrowDown className="w-3 h-3" />
                           </Button>
@@ -435,8 +447,8 @@ function ManagerViewPage() {
                     ))}
                   </ul>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-500 p-6 text-center">
-                    <div className="bg-slate-800/50 p-4 rounded-full mb-3">
+                  <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-6 text-center">
+                    <div className="bg-card/50 p-4 rounded-full mb-3">
                       <svg
                         className="w-8 h-8 opacity-50"
                         fill="none"
@@ -455,11 +467,11 @@ function ManagerViewPage() {
                   </div>
                 )}
               </CardContent>
-              <div className="p-3 border-t border-slate-700 bg-slate-800">
+              <div className="p-3 border-t border-border bg-card">
                 <Button
                   onClick={handleSave}
                   disabled={selectedItems.length === 0 || isProcessing || isSaving}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all duration-300 font-semibold"
+                  className="w-full bg-success hover:bg-success/90 text-primary-foreground shadow-sm transition-all duration-300 font-semibold"
                 >
                   Confirm to Production
                 </Button>
@@ -467,55 +479,57 @@ function ManagerViewPage() {
             </Card>
 
             {/* In Production Column */}
-            <Card className="flex flex-col bg-slate-800/50 border-slate-700 shadow-sm overflow-hidden h-full">
-              <CardHeader className="bg-slate-900/50 border-b border-slate-700 py-4 px-5 flex flex-row items-center justify-between">
+            <Card className="flex flex-col bg-card/50 border-border shadow-sm overflow-hidden h-full">
+              <CardHeader className="bg-background/50 border-b border-border py-4 px-5 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-purple-500"></div>
-                  <CardTitle className="text-white tracking-wide text-lg">In Production</CardTitle>
+                  <div className="h-2 w-2 rounded-full bg-primary"></div>
+                  <CardTitle className="text-foreground tracking-wide text-lg">
+                    In Production
+                  </CardTitle>
                 </div>
-                <div className="px-2 py-1 bg-purple-900/30 rounded text-xs font-mono text-purple-300 border border-purple-800">
+                <div className="px-2 py-1 bg-accent/30 rounded text-xs font-mono text-primary border border-primary/25">
                   {inProductionItems.length}
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 p-0 overflow-y-auto custom-scrollbar bg-slate-900/30">
+              <CardContent className="max-h-[32rem] flex-1 p-0 overflow-y-auto custom-scrollbar bg-background/30">
                 {inProductionItems.length > 0 ? (
                   <ul className="p-3 space-y-2">
                     {inProductionItems.map(item => (
                       <li
                         key={item.id}
-                        className={`p-3 rounded-lg border transition-all duration-500 ${isProcessing ? 'bg-purple-900/20 border-purple-500/40 shadow-md' : 'bg-slate-800 border-slate-700'}`}
+                        className={`p-3 rounded-lg border transition-all duration-500 ${isProcessing ? 'bg-accent/20 border-primary/40 shadow-md' : 'bg-card border-border'}`}
                       >
-                        <div className="flex justify-between items-center mb-2">
+                        <div className="flex flex-wrap justify-between items-center gap-4 mb-2">
                           <span
-                            className={`font-semibold ${isProcessing ? 'text-purple-300' : 'text-white'}`}
+                            className={`font-semibold ${isProcessing ? 'text-primary' : 'text-foreground'}`}
                           >
                             {item.product?.name}
                           </span>
                           {isProcessing && (
-                            <Loader2 className="h-3 w-3 animate-spin text-purple-400" />
+                            <Loader2 className="h-3 w-3 animate-spin text-primary" />
                           )}
                         </div>
-                        <div className="text-xs text-slate-400 flex justify-between">
+                        <div className="text-xs text-muted-foreground flex justify-between">
                           <span>{item.quantity} units</span>
                           <span
                             className={
-                              isProcessing ? 'text-purple-400 font-medium' : 'text-slate-500'
+                              isProcessing ? 'text-primary font-medium' : 'text-muted-foreground'
                             }
                           >
                             {isProcessing ? 'Processing' : 'Queued'}
                           </span>
                         </div>
                         {isProcessing && (
-                          <div className="mt-2 h-1 w-full bg-slate-700 rounded-full overflow-hidden">
-                            <div className="h-full bg-purple-500 animate-progress"></div>
+                          <div className="mt-2 h-1 w-full bg-secondary rounded-full overflow-hidden">
+                            <div className="h-full bg-primary animate-progress"></div>
                           </div>
                         )}
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-500 p-6 text-center">
-                    <div className="bg-slate-800/50 p-4 rounded-full mb-3">
+                  <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-6 text-center">
+                    <div className="bg-card/50 p-4 rounded-full mb-3">
                       <svg
                         className="w-8 h-8 opacity-50"
                         fill="none"
@@ -540,13 +554,13 @@ function ManagerViewPage() {
                   </div>
                 )}
               </CardContent>
-              <div className="p-3 border-t border-slate-700 bg-slate-800">
+              <div className="p-3 border-t border-border bg-card">
                 <Button
                   onClick={handleStart}
                   disabled={
                     inProductionItems.length === 0 || isProcessing || isSaving || startRun.isPending
                   }
-                  className={`w-full text-white shadow-sm transition-all duration-300 font-bold ${isProcessing ? 'bg-purple-800 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500'}`}
+                  className={`w-full text-primary-foreground shadow-sm transition-all duration-300 font-bold ${isProcessing ? 'bg-primary cursor-not-allowed' : 'bg-primary hover:bg-primary'}`}
                 >
                   {isProcessing ? 'Processing...' : 'START PRODUCTION'}
                 </Button>

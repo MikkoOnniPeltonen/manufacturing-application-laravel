@@ -250,8 +250,8 @@ when any sale is missing or belongs to another line. Staging order is persisted.
 The TypeScript check now includes all frontend source files in strict mode.
 Screens, contexts and shared UI components are TypeScript/TSX, and API calls are
 checked against the generated contract. Browser tests cover the real cookie
-login/logout flow, admin production access, manager restrictions, and history
-search:
+login/logout flow, customer creation/editing/deletion, order changes, background
+production, manager restrictions, history search, and desktop/mobile page layouts:
 
 ```bash
 pnpm --filter manufacturing-frontend exec playwright install chromium
@@ -261,6 +261,8 @@ pnpm --filter manufacturing-frontend test:e2e
 Use a **dedicated, disposable database** containing demo fixtures for browser
 checks. Migrate and seed it with `APP_ENV=local DEMO_MODE=true` before starting the
 suite. Playwright starts its own API and frontend servers on ports 8000 and 5173.
+To keep an existing preview open, set `E2E_API_PORT=8100 E2E_FRONTEND_PORT=5174`
+when running the suite; keep its database separate from your preview database.
 Do not run it against a shared database. PostgreSQL concurrency tests run as part
 of `composer test` when `DB_CONNECTION=pgsql`; SQLite runs skip those PostgreSQL-only tests.
 All backend tests migrate their configured database, so always use a test database.

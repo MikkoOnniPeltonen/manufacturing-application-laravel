@@ -16,19 +16,16 @@ function OrderTable({ table }: { table: Table<SaleRow> }) {
   const hasRows = rows.length > 0;
 
   return (
-    <div className="relative w-full h-[400px] overflow-auto rounded-lg border border-slate-700 shadow-sm custom-scrollbar">
+    <div className="relative w-full h-[400px] overflow-auto rounded-lg border border-border shadow-sm custom-scrollbar">
       <table className="w-full text-sm text-left">
-        <TableHeader className="sticky top-0 z-20 bg-slate-900/90 backdrop-blur supports-[backdrop-filter]:bg-slate-900/60">
+        <TableHeader className="sticky top-0 z-20 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           {table.getHeaderGroups().map(headerGroup => (
-            <TableRow
-              key={headerGroup.id}
-              className="border-b border-slate-700 hover:bg-transparent"
-            >
+            <TableRow key={headerGroup.id} className="border-b border-border hover:bg-transparent">
               {headerGroup.headers.map(header => (
                 <TableHead
                   key={header.id}
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-semibold text-slate-300"
+                  className="px-4 py-3 text-left text-xs font-semibold text-foreground"
                 >
                   {header.isPlaceholder
                     ? null
@@ -38,17 +35,17 @@ function OrderTable({ table }: { table: Table<SaleRow> }) {
             </TableRow>
           ))}
         </TableHeader>
-        <TableBody className="bg-slate-800 divide-y divide-slate-700">
+        <TableBody className="bg-card divide-y divide-slate-700">
           {hasRows ? (
             rows.map(row => (
               <TableRow
                 key={row.id}
-                className="hover:bg-slate-700/50 transition-colors border-slate-700"
+                className="hover:bg-secondary/50 transition-colors border-border"
               >
                 {row.getVisibleCells().map(cell => (
                   <TableCell
                     key={cell.id}
-                    className="px-4 py-4 whitespace-nowrap text-sm font-medium text-slate-200"
+                    className="px-4 py-4 whitespace-nowrap text-sm font-medium text-foreground"
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
@@ -59,19 +56,22 @@ function OrderTable({ table }: { table: Table<SaleRow> }) {
             <TableRow>
               <TableCell
                 colSpan={table.getAllColumns().length}
-                className="px-4 py-4 text-center text-sm text-slate-500"
+                className="px-4 py-4 text-center text-sm text-muted-foreground"
               >
                 No Orders available.
               </TableCell>
             </TableRow>
           )}
         </TableBody>
-        <TableFooter className="sticky bottom-0 z-20 bg-slate-900/90 backdrop-blur supports-[backdrop-filter]:bg-slate-900/60">
-          <TableRow className="border-t border-slate-700 hover:bg-transparent">
-            <TableCell colSpan={4} className="px-4 py-4 text-left text-sm font-bold text-slate-300">
+        <TableFooter className="sticky bottom-0 z-20 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <TableRow className="border-t border-border hover:bg-transparent">
+            <TableCell
+              colSpan={4}
+              className="px-4 py-4 text-left text-sm font-bold text-foreground"
+            >
               Total
             </TableCell>
-            <TableCell className="px-4 py-4 text-right text-sm font-bold text-slate-100">
+            <TableCell className="px-4 py-4 text-right text-sm font-bold text-foreground">
               {rows.reduce((acc, row) => acc + (row.original.quantity || 0), 0)}
             </TableCell>
           </TableRow>
